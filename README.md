@@ -77,7 +77,7 @@ claude plugins add https://github.com/your-username/nebula-matrix-skills-marketp
 
 ## 配置参考
 
-详细配置说明请参考: [PLUGIN_CONFIGURATION_GUIDE.md](https://github.com/luyufan498/yf-skills/blob/main/docs/PLUGIN_CONFIGURATION_GUIDE.md)
+详细配置说明请参考: [PLUGIN_CONFIGURATION_GUIDE.md](doc/PLUGIN_CONFIGURATION_GUIDE.md)
 
 ## 版本信息
 
@@ -88,7 +88,3 @@ claude plugins add https://github.com/your-username/nebula-matrix-skills-marketp
 ## 许可证
 
 本 marketplace 下的各插件遵循各自的许可证声明。
-
----
-
-更多信息请访问: https://github.com/luyufan498/yf-skills

@@ -169,8 +169,7 @@ description: 何时使用此技能的说明
 
 ## 插件配置参考文档
 
-详细的配置规范请参考：
-`https://github.com/luyufan498/yf-skills/blob/main/docs/PLUGIN_CONFIGURATION_GUIDE.md`
+详细的配置规范请参考：[doc/PLUGIN_CONFIGURATION_GUIDE.md](doc/PLUGIN_CONFIGURATION_GUIDE.md)
 
 该参考文档包含：
 - 完整的 marketplace.json schema
