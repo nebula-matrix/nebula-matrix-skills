@@ -1,0 +1,20 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "nebula-matrix-skills-marketplace",
+  "version": "1.0.0",
+  "description": "Nebula Matrix 技能市场，提供企业级生产力工具和自动化解决方案",
+  "owner": {
+    "name": "Nebula Matrix Team",
+    "email": "team@nebulamatrix.com"
+  },
+  "plugins": [
+    {
+      "name": "nbl-ppt-builder",
+      "source": "./nbl-ppt-builder",
+      "description": "NBL 企业 PPT 构建工具，包含标准模板、配色方案和内容规范",
+      "category": "productivity",
+      "tags": ["ppt", "presentation", "document", "templates"],
+      "keywords": ["ppt", "presentation", "slide", "document", "html", "markdown"]
+    }
+  ]
+}
