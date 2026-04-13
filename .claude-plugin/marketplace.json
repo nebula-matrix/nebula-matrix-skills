@@ -1,6 +1,6 @@
 {
   "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
-  "name": "nebula-matrix-skills-marketplace",
+  "name": "nebula-matrix-skills",
   "version": "1.0.0",
   "description": "Nebula Matrix 技能市场，提供企业级生产力工具和自动化解决方案",
   "owner": {

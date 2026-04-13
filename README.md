@@ -1,11 +1,11 @@
-# Nebula Matrix Skills Marketplace
+# Nebula Matrix Skills
 
 这是 Nebula Matrix 技能市场，提供企业级生产力工具和自动化解决方案。
 
 ## 目录结构
 
 ```
-nebula-matrix-skills-marketplace/
+nebula-matrix-skills/
 ├── .claude-plugin/
 │   └── marketplace.json          # Marketplace 配置文件
 ├── nbl-ppt-builder/              # NBL PPT 构建工具插件
@@ -45,10 +45,10 @@ nebula-matrix-skills-marketplace/
 
 ```bash
 # 使用本地路径安装
-claude plugins add /home/catmouse/Github_Project/nebula-matrix-skills-marketplace
+claude plugins add /home/catmouse/Github_Project/nebula-matrix-skills
 
 # 或使用 git URL 安装
-claude plugins add https://github.com/your-username/nebula-matrix-skills-marketplace.git
+claude plugins add https://github.com/your-username/nebula-matrix-skills.git
 ```
 
 ### 使用插件中的技能

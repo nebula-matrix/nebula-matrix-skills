@@ -11,7 +11,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 Marketplace 遵循 Claude Code 插件系统定义的特定结构：
 
 ```
-nebula-matrix-skills-marketplace/
+nebula-matrix-skills/
 ├── .claude-plugin/
 │   └── marketplace.json          # Marketplace 索引文件（必需）
 ├── {plugin-name}/                # 每个插件是顶层目录
@@ -200,7 +200,7 @@ my-plugin/
 
 ```bash
 # 从本地路径安装
-claude plugins add /path/to/nebula-matrix-skills-marketplace
+claude plugins add /path/to/nebula-matrix-skills
 
 # 验证插件可用
 claude plugins list
