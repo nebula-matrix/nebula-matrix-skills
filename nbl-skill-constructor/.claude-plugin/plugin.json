@@ -1,0 +1,15 @@
+{
+  "name": "nbl-skill-constructor",
+  "description": "NBL企业技能构造规范与开发指南，用于在 workspace 中创建和调试符合NBL标准的 skill",
+  "version": "1.0.0",
+  "author": {
+    "name": "luyufan498"
+  },
+  "homepage": "https://github.com/luyufan498/yf-skills",
+  "repository": "https://github.com/luyufan498/yf-skills/tree/main/nbl-skill-constructor",
+  "license": "MIT",
+  "keywords": ["skill", "development", "creator", "tool"],
+  "category": "development",
+  "tags": ["skill", "development", "tool"],
+  "skills": "./skills"
+}

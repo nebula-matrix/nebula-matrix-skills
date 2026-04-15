@@ -15,6 +15,14 @@
       "category": "productivity",
       "tags": ["ppt", "presentation", "document", "templates"],
       "keywords": ["ppt", "presentation", "slide", "document", "html", "markdown"]
+    },
+    {
+      "name": "nbl-skill-constructor",
+      "source": "./nbl-skill-constructor",
+      "description": "NBL企业技能构造规范与开发指南，用于在 workspace 中创建和调试符合NBL标准的 skill",
+      "category": "development",
+      "tags": ["skill", "development", "creator", "tool"],
+      "keywords": ["skill", "development", "creator", "tool", "constructor", "builder"]
     }
   ]
 }
