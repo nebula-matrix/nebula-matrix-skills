@@ -18,6 +18,14 @@ nebula-matrix-skills/
 │   │       ├── scripts/         # 执行脚本
 │   │       └── templates/       # 模板文件
 │   └── README.md
+├── nbl-skill-constructor/        # NBL 技能构造器插件
+│   ├── .claude-plugin/
+│   │   └── plugin.json          # 插件配置
+│   └── skills/
+│       └── nbl-skill-constructor/
+│           ├── SKILL.md         # 技能主文件
+│           ├── references/      # 参考文档
+│           └── scripts/         # 执行脚本
 └── README.md                     # 本文件
 ```
 
@@ -36,6 +44,21 @@ nebula-matrix-skills/
 - 支持标准配色方案和布局
 - 自动转换为 PPTX 格式
 - 包含封面、内容、结尾等模板
+
+### nbl-skill-constructor
+
+**描述**: NBL 企业技能构造规范与开发指南，用于在 workspace 中创建和调试符合 NBL 标准的 skill
+
+**分类**: development
+
+**标签**: skill, development, creator, tool
+
+**功能**:
+- 在 workspace 中初始化技能目录结构
+- 提供标准化的 skill 开发模板
+- 包含脚本复杂度决策树和最佳实践指导
+- 支持技能打包和验证工具
+- 帮助开发者快速创建符合规范的 Claude Code 技能
 
 ## 如何使用
 
@@ -58,6 +81,9 @@ claude plugins add https://github.com/your-username/nebula-matrix-skills.git
 ```bash
 # 触发 PPT 构建技能
 /ppt-builder 创建一个企业介绍 PPT
+
+# 触发技能构造器
+/skill-constructor 帮我创建一个新的数据分析技能
 ```
 
 或者直接描述需求:
