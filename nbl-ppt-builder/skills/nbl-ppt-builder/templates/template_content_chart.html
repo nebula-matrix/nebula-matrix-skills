@@ -6,7 +6,6 @@
 <title>正文页 - 数据图表布局</title>
 <script src="https://statics.moonshot.cn/kimi-ppt/html-gen/static/tailwindcss@4_0805.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700;900&display=swap" rel="stylesheet"/>
-<script src="https://cdn.jsdelivr.net/npm/echarts@5.4.0/dist/echarts.min.js"></script>
 <style>
   body {
     font-family: 'Noto Sans SC', 'Microsoft YaHei', sans-serif;
@@ -27,6 +26,7 @@
 <body class="bg-gray-100 p-8">
 
 <!-- 正文页 slide - 数据图表布局 -->
+<!-- 注意：图表区域使用 placeholder 类，生成 PPTX 后需用 slide.addChart() 添加图表 -->
 <div class="slide-container mx-auto">
   <!-- 背景装饰 -->
   <div class="absolute inset-0 overflow-hidden pointer-events-none">
@@ -54,7 +54,7 @@
     </div>
   </div>
 
-  <!-- 图表区域 -->
+  <!-- 图表区域（placeholder，生成后需手动添加图表） -->
   <div class="absolute left-[17px] top-[140px] right-[17px] bottom-[60px] bg-white rounded-2xl p-5 card-shadow">
     <div class="h-full flex flex-col">
       <div class="flex items-center justify-between mb-3">
@@ -70,7 +70,10 @@
           </div>
         </div>
       </div>
-      <div class="flex-1" id="chart-container" style="min-height: 280px;"></div>
+      <!-- 图表占位符 - 使用 placeholder 类标记，html2pptx 会提取位置 -->
+      <div id="chart-placeholder" class="placeholder flex-1 bg-[#F5F5F5] rounded-xl flex items-center justify-center" style="min-height: 280px;">
+        <p class="text-[12pt] text-[#999]">[图表占位区域]</p>
+      </div>
     </div>
   </div>
 
@@ -79,97 +82,6 @@
     <span class="text-[9pt] text-[#898989]">9</span>
   </div>
 </div>
-
-<script>
-  // 图表配置
-  var chartDom = document.getElementById('chart-container');
-  if (chartDom) {
-    var myChart = echarts.init(chartDom);
-    var option = {
-      tooltip: {
-        trigger: 'axis',
-        backgroundColor: 'rgba(255, 255, 255, 0.95)',
-        borderColor: '#0B3BD3',
-        borderWidth: 1,
-        textStyle: {
-          color: '#1a1a2e'
-        }
-      },
-      legend: {
-        data: ['{{数据系列1}}', '{{数据系列2}}'],
-        top: 0,
-        textStyle: {
-          color: '#1a1a2e',
-          fontSize: 11
-        }
-      },
-      grid: {
-        left: '3%',
-        right: '4%',
-        bottom: '3%',
-        top: '15%',
-        containLabel: true
-      },
-      xAxis: {
-        type: 'category',
-        data: ['{{类别1}}', '{{类别2}}', '{{类别3}}', '{{类别4}}', '{{类别5}}', '{{类别6}}'],
-        axisLine: {
-          lineStyle: {
-            color: '#ddd'
-          }
-        },
-        axisLabel: {
-          color: '#666',
-          fontSize: 10
-        }
-      },
-      yAxis: {
-        type: 'value',
-        axisLine: {
-          show: false
-        },
-        axisTick: {
-          show: false
-        },
-        axisLabel: {
-          color: '#666',
-          fontSize: 10
-        },
-        splitLine: {
-          lineStyle: {
-            color: '#f0f0f0'
-          }
-        }
-      },
-      series: [
-        {
-          name: '{{数据系列1}}',
-          type: 'bar',
-          data: [120, 200, 150, 80, 70, 110],
-          itemStyle: {
-            color: '#0B3BD3',
-            borderRadius: [4, 4, 0, 0]
-          },
-          barWidth: '30%'
-        },
-        {
-          name: '{{数据系列2}}',
-          type: 'bar',
-          data: [80, 120, 180, 120, 90, 140],
-          itemStyle: {
-            color: '#7986CB',
-            borderRadius: [4, 4, 0, 0]
-          },
-          barWidth: '30%'
-        }
-      ]
-    };
-    myChart.setOption(option);
-    window.addEventListener('resize', function() {
-      myChart.resize();
-    });
-  }
-</script>
 
 </body>
 </html>
