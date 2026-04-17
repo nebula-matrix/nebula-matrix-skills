@@ -281,9 +281,18 @@ function addElements(slideData, targetSlide, pres) {
       let adjustedX = el.position.x;
       let adjustedW = el.position.w;
 
-      // Make single-line text 2% wider to account for underestimate
+      // Make single-line text wider to account for underestimate
+      // Short text (<=4 chars) needs more width increase
       if (isSingleLine) {
-        const widthIncrease = el.position.w * 0.02;
+        const textLength = typeof el.text === 'string' ? el.text.length : 10;
+        // Short text needs more padding: 15% for <=3 chars, 10% for 4-5 chars, 2% for longer
+        let widthIncreasePct = 0.02;
+        if (textLength <= 3) {
+          widthIncreasePct = 0.15;
+        } else if (textLength <= 5) {
+          widthIncreasePct = 0.10;
+        }
+        const widthIncrease = el.position.w * widthIncreasePct;
         const align = el.style.align;
 
         if (align === 'center') {
