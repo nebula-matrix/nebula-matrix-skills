@@ -204,6 +204,12 @@ def merge_html_files(html_files, output_file):
             margin: 0;
             padding: 0;
             background: #f5f5f5;
+            height: 100%;
+            overflow-y: auto;
+        }
+        body {
+            min-height: 100%;
+            padding-bottom: 40px;
         }
         .page {
             page-break-after: always;
@@ -218,6 +224,7 @@ def merge_html_files(html_files, output_file):
         @media print {
             body {
                 background: white;
+                padding-bottom: 0;
             }
             .page {
                 margin: 0;
