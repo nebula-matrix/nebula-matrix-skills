@@ -26,6 +26,15 @@ nebula-matrix-skills/
 │           ├── SKILL.md         # 技能主文件
 │           ├── references/      # 参考文档
 │           └── scripts/         # 执行脚本
+├── nbl-docx-to-markdown/         # NBL DOCX 转 Markdown 插件
+│   ├── .claude-plugin/
+│   │   └── plugin.json          # 插件配置
+│   └── skills/
+│       └── nbl-docx-to-markdown/
+│           ├── SKILL.md         # 技能主文件
+│           ├── assets/          # 资源文件
+│           ├── references/      # 参考文档
+│           └── scripts/         # 执行脚本
 └── README.md                     # 本文件
 ```
 
@@ -59,6 +68,22 @@ nebula-matrix-skills/
 - 包含脚本复杂度决策树和最佳实践指导
 - 支持技能打包和验证工具
 - 帮助开发者快速创建符合规范的 Claude Code 技能
+
+### nbl-docx-to-markdown
+
+**描述**: NBL企业定制的 DOCX 转 Markdown 工具，支持复杂 Word 文档转换，包含图片、Visio图表、表格处理及技术文档优化
+
+**分类**: productivity
+
+**标签**: docx, markdown, converter, document
+
+**功能**:
+- 使用 LibreOffice + Pandoc 将 Word 文档转换为 Markdown
+- 支持处理图片、Visio图表，自动复制到 assets 目录
+- 保留表格为 HTML 格式以确保兼容性
+- 自动修复章节标题格式，将 `[xxx]` 标记转换为代码格式
+- 验证转换结果，发现结构差异时强制修复
+- 特别适用于包含寄存器描述、表项定义等技术文档
 
 ## 如何使用
 

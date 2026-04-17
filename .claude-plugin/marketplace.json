@@ -23,6 +23,14 @@
       "category": "development",
       "tags": ["skill", "development", "creator", "tool"],
       "keywords": ["skill", "development", "creator", "tool", "constructor", "builder"]
+    },
+    {
+      "name": "nbl-docx-to-markdown",
+      "source": "./nbl-docx-to-markdown",
+      "description": "NBL企业定制的 DOCX 转 Markdown 工具，支持复杂 Word 文档转换，包含图片、Visio图表、表格处理及技术文档优化",
+      "category": "productivity",
+      "tags": ["docx", "markdown", "converter", "document"],
+      "keywords": ["docx", "word", "markdown", "converter", "document", "libreoffice", "pandoc"]
     }
   ]
 }
