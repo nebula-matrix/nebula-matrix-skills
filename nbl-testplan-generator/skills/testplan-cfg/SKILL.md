@@ -57,7 +57,7 @@ If any required argument missing, ASK the user.
 
 Run reg_to_json.py:
 ```bash
-cd ${CLAUDE_SKILL_DIR}/../../scripts && uv run python reg_to_json.py "$reg_path" "$TP_WORKDIR/reg.json"
+cd ${CLAUDE_SKILL_DIR}/../nbl-testplan-generator/scripts && uv run python reg_to_json.py "$reg_path" "$TP_WORKDIR/reg.json"
 ```
 
 ### Step 3: Extract Covered Registers
@@ -67,7 +67,7 @@ The cfg_writer.py handles this automatically from func_path.
 ### Step 4: Generate Ch2
 
 ```bash
-cd ${CLAUDE_SKILL_DIR}/../../scripts && uv run python cfg_writer.py \
+cd ${CLAUDE_SKILL_DIR}/../nbl-testplan-generator/scripts && uv run python cfg_writer.py \
   --func-xlsx "$func_path" \
   --reg "$TP_WORKDIR/reg.json" \
   --output "$output_path"

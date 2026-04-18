@@ -62,14 +62,24 @@ mkdir -p "$TP_WORKDIR" 2>/dev/null || TP_WORKDIR="$HOME/.tp_cache"
 
 ### Step 2: Document Conversion
 
-**Call nbl-docx-to-markdown skill:**
+**Use Skill tool to invoke nbl-docx-to-markdown:**
 ```
-spec.docx → spec.md ($TP_WORKDIR)
+Invoke Skill tool with:
+  skill: "nbl-docx-to-markdown"
+  args: "$spec_path --output-dir $TP_WORKDIR"
+```
+
+This will create `$TP_WORKDIR/<basename>_work/markdown_output/<basename>.md`.
+
+**Set spec_md path:**
+```
+spec_basename=$(basename "$spec_path" .docx)
+spec_md="$TP_WORKDIR/${spec_basename}_work/markdown_output/${spec_basename}.md"
 ```
 
 **Run reg_to_json.py:**
 ```bash
-cd ${CLAUDE_SKILL_DIR}/../../scripts && uv run python reg_to_json.py "$reg_path" "$TP_WORKDIR/reg.json"
+cd ${CLAUDE_SKILL_DIR}/../nbl-testplan-generator/scripts && uv run python reg_to_json.py "$reg_path" "$TP_WORKDIR/reg.json"
 ```
 
 ### Step 3: Cross-Reference Analysis
@@ -98,10 +108,10 @@ Save to `$TP_WORKDIR/func_features.json`
 ### Step 5: Write Output
 
 ```bash
-cd ${CLAUDE_SKILL_DIR}/../../scripts && uv run python func_writer.py \
+cd ${CLAUDE_SKILL_DIR}/../nbl-testplan-generator/scripts && uv run python func_writer.py \
   --func "$TP_WORKDIR/func_features.json" \
   --output "$output_path" \
-  --template ${CLAUDE_SKILL_DIR}/../../skills/nbl-testplan-generator/templates/testplan_template.xlsx
+  --template ${CLAUDE_SKILL_DIR}/../nbl-testplan-generator/templates/testplan_template.xlsx
 ```
 
 ### Step 6: Report

@@ -10,10 +10,6 @@ import sys
 from pathlib import Path
 from typing import Any
 
-# Add skill scripts directory to path for imports
-_skill_scripts = Path(__file__).parent.parent / "skills" / "nbl-testplan-generator" / "scripts"
-if str(_skill_scripts) not in sys.path:
-    sys.path.insert(0, str(_skill_scripts))
 from writers.xlsx_writer import write_testpoint_xlsx
 
 

@@ -71,10 +71,26 @@ All subsequent steps use `$TP_WORKDIR` for intermediate JSON files (parsed data,
 
 ### Step 2: Parse Documents (Stage 1)
 
-Run Python parsers to extract structured data:
+**Convert spec.docx to Markdown using nbl-docx-to-markdown skill:**
+
+```
+Invoke Skill tool with:
+  skill: "nbl-docx-to-markdown"
+  args: "$spec_path --output-dir $TP_WORKDIR"
+```
+
+This creates `$TP_WORKDIR/<basename>_work/markdown_output/<basename>.md`.
+
+**Set spec_md path:**
+```
+spec_basename=$(basename "$spec_path" .docx)
+spec_md="$TP_WORKDIR/${spec_basename}_work/markdown_output/${spec_basename}.md"
+```
+
+**Parse Markdown and register files:**
 
 ```bash
-cd ${CLAUDE_SKILL_DIR} && uv run python parsers/docx_parser.py "$spec_path" "$TP_WORKDIR/tp_docx_parsed.json"
+cd ${CLAUDE_SKILL_DIR} && uv run python parsers/md_parser.py "$spec_md" "$TP_WORKDIR/tp_docx_parsed.json"
 ```
 
 ```bash
