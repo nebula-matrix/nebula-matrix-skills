@@ -85,6 +85,21 @@ nebula-matrix-skills/
 - 验证转换结果，发现结构差异时强制修复
 - 特别适用于包含寄存器描述、表项定义等技术文档
 
+### nbl-testplan-generator
+
+**描述**: 数字芯片验证测试计划生成器，从功能规格书（.docx）和寄存器配置（.xlsx）生成结构化测试点文档
+
+**分类**: development
+
+**标签**: testplan, verification, chip, document
+
+**功能**:
+- 从功能规格书（.docx）解析模块功能特性
+- 从寄存器手册（.xlsx）提取寄存器配置信息
+- 生成 D-E-F/G 层级结构化测试点文档
+- 支持功能特性（testplan-func）和配置特性（testplan-cfg）分开生成
+- 提供 review 刷新机制，支持增量更新测试点
+
 ## 如何使用
 
 ### 安装 Marketplace
