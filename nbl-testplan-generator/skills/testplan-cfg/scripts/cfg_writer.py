@@ -415,7 +415,13 @@ def write_independent_ch2_xlsx(
     dict[str, int]
         Statistics: total_registers, covered_registers, new_registers.
     """
-    from xlsx_writer import write_ch1_xlsx
+    # Import from same directory as this script
+    import importlib.util
+    _xlsx_writer_path = Path(__file__).parent / "xlsx_writer.py"
+    _spec = importlib.util.spec_from_file_location("xlsx_writer_local", _xlsx_writer_path)
+    _xlsx_writer = importlib.util.module_from_spec(_spec)
+    _spec.loader.exec_module(_xlsx_writer)
+    write_ch1_xlsx = _xlsx_writer.write_ch1_xlsx
 
     ch2_data = build_ch2_json(reg_data, covered_regs=set())
 

@@ -1,14 +1,18 @@
 """Tests for xlsx_writer module."""
+import importlib.util
 import sys
 from pathlib import Path
 
 import pytest
 from openpyxl import load_workbook
 
-# Add scripts to path
-sys.path.insert(0, str(Path(__file__).parent.parent / "skills" / "testplan-func" / "scripts"))
+# Explicitly load xlsx_writer from testplan-func/scripts
+_func_xlsx_writer = Path(__file__).parent.parent / "skills" / "testplan-func" / "scripts" / "xlsx_writer.py"
+_spec = importlib.util.spec_from_file_location("xlsx_writer_func", _func_xlsx_writer)
+xlsx_writer_func = importlib.util.module_from_spec(_spec)
+_spec.loader.exec_module(xlsx_writer_func)
 
-from xlsx_writer import write_ch1_xlsx
+write_ch1_xlsx = xlsx_writer_func.write_ch1_xlsx
 
 
 class TestWriteCh1Xlsx:

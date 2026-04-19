@@ -302,15 +302,120 @@ def combine_and_write(
     return write_testpoint_xlsx(chapters, output_path, template_path)
 
 
+def orchestrate_testplan(
+    spec_path: str,
+    reg_path: str,
+    output_path: str,
+    template_path: str,
+    workdir: str | None = None,
+) -> dict[str, Any]:
+    """Orchestrate full testplan generation: parse docs, generate Ch1, Ch2, combine.
+
+    This is the main entry point for the nbl-testplan-generator skill.
+
+    Parameters
+    ----------
+    spec_path : str
+        Path to functional specification (.md, after docx conversion).
+    reg_path : str
+        Path to register configuration .xlsx.
+    output_path : str
+        Destination xlsx file path.
+    template_path : str
+        Path to the template xlsx.
+    workdir : str | None
+        Working directory for intermediate files.
+
+    Returns
+    -------
+    dict[str, Any]
+        Statistics and output paths.
+    """
+    from pathlib import Path
+    import json
+
+    workdir = workdir or str(Path(output_path).parent / ".tp_cache")
+    Path(workdir).mkdir(parents=True, exist_ok=True)
+
+    # Parse documents
+    import sys
+    scripts_dir = Path(__file__).parent.parent
+    sys.path.insert(0, str(scripts_dir))
+
+    from parsers.md_parser import parse_markdown
+    from parsers.reg_parser import parse_xlsx as parse_register_xlsx
+
+    # Parse spec
+    spec_data = parse_markdown(spec_path)
+    spec_json = str(Path(workdir) / "spec_parsed.json")
+    with open(spec_json, "w", encoding="utf-8") as f:
+        json.dump(spec_data, f, ensure_ascii=False, indent=2)
+
+    # Parse registers
+    reg_data = parse_register_xlsx(reg_path)
+    reg_json = str(Path(workdir) / "reg_parsed.json")
+    with open(reg_json, "w", encoding="utf-8") as f:
+        json.dump(reg_data, f, ensure_ascii=False, indent=2)
+
+    # Generate Ch1 features (placeholder - LLM does this)
+    ch1_json = str(Path(workdir) / "ch1_features.json")
+    ch1_data = {
+        "module_name": spec_data.get("document_title", "UNKNOWN"),
+        "spec_name": Path(spec_path).stem,
+        "chapter": "chapter 1 功能特性",
+        "features": [],
+    }
+    with open(ch1_json, "w", encoding="utf-8") as f:
+        json.dump(ch1_data, f, ensure_ascii=False, indent=2)
+
+    # Combine Ch1 + Ch2
+    stats = combine_and_write(ch1_json, reg_json, output_path, template_path)
+
+    return {
+        "stats": stats,
+        "output_path": output_path,
+        "workdir": workdir,
+        "spec_json": spec_json,
+        "reg_json": reg_json,
+    }
+
+
 if __name__ == "__main__":
     import argparse
 
-    parser = argparse.ArgumentParser(description="Combine Ch1+Ch2 and write testplan xlsx")
-    parser.add_argument("--ch1", required=True, help="Path to Ch1 features JSON")
+    parser = argparse.ArgumentParser(
+        description="Combine Ch1+Ch2 and write testplan xlsx",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  # Combine existing JSON files
+  python combine_writer.py --ch1 ch1.json --reg reg.json --output testplan.xlsx --template template.xlsx
+
+  # Orchestrate full generation (parse + combine)
+  python combine_writer.py --spec spec.md --reg manual.xlsx --output testplan.xlsx --template template.xlsx
+        """,
+    )
+    parser.add_argument("--ch1", help="Path to Ch1 features JSON")
     parser.add_argument("--reg", required=True, help="Path to parsed register JSON")
     parser.add_argument("--output", required=True, help="Output xlsx path")
     parser.add_argument("--template", required=True, help="Template xlsx path")
+    parser.add_argument("--spec", help="Path to spec markdown (for orchestration)")
+    parser.add_argument("--workdir", help="Working directory for intermediate files")
     args = parser.parse_args()
 
-    stats = combine_and_write(args.ch1, args.reg, args.output, args.template)
-    print(f"Done: {stats}")
+    if args.spec:
+        # Orchestration mode
+        result = orchestrate_testplan(
+            args.spec,
+            args.reg,
+            args.output,
+            args.template,
+            args.workdir,
+        )
+        print(f"Orchestration complete: {result}")
+    elif args.ch1:
+        # Combine mode
+        stats = combine_and_write(args.ch1, args.reg, args.output, args.template)
+        print(f"Done: {stats}")
+    else:
+        parser.error("Either --spec (orchestration) or --ch1 (combine) is required")
