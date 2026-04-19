@@ -114,11 +114,23 @@ This generates:
 - Final output xlsx with Ch1 + Ch2 combined
 - Cross-references covered registers
 
+**Alternative: Direct combine_writer CLI**
+
+If you have Ch1 JSON and register JSON ready, run directly:
+
+```bash
+cd ${CLAUDE_SKILL_DIR}/scripts && PYTHONPATH=${CLAUDE_SKILL_DIR}/scripts uv run python -m writers.combine_writer \
+  --ch1 "$TP_WORKDIR/tp_ch1_features.json" \
+  --reg "$TP_WORKDIR/tp_reg_parsed.json" \
+  --output "$output_path" \
+  --template "${CLAUDE_SKILL_DIR}/templates/testplan_template.xlsx"
+```
+
 ### Step 5: Validate Output (Optional)
 
 ```bash
-cd ${CLAUDE_SKILL_DIR}/scripts/writers && uv run python -c "
-from combine_writer import validate_jw_correspondence
+cd ${CLAUDE_SKILL_DIR}/scripts && PYTHONPATH=${CLAUDE_SKILL_DIR}/scripts uv run python -c "
+from writers.combine_writer import validate_jw_correspondence
 import json
 
 # Load and validate

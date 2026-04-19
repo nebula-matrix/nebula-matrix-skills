@@ -95,12 +95,12 @@ spec_basename=$(basename "$spec_path" .md)
 
 **Parse Markdown specification:**
 ```bash
-cd ${CLAUDE_SKILL_DIR}/scripts && uv run python md_parser.py "$spec_md" "$TP_WORKDIR/spec_parsed.json"
+cd ${CLAUDE_SKILL_DIR}/scripts && uv run python parsers/md_parser.py "$spec_md" "$TP_WORKDIR/spec_parsed.json"
 ```
 
 **Parse Register xlsx:**
 ```bash
-cd ${CLAUDE_SKILL_DIR}/scripts && uv run python reg_to_json.py "$reg_path" "$TP_WORKDIR/reg.json"
+cd ${CLAUDE_SKILL_DIR}/scripts && uv run python parsers/reg_parser.py "$reg_path" "$TP_WORKDIR/reg.json"
 ```
 
 ### Step 4: Cross-Reference Analysis

@@ -281,7 +281,7 @@ def combine_and_write(
     template_path: str,
 ) -> dict[str, int]:
     """Main pipeline: load JSON inputs, process Ch2, write xlsx."""
-    from writers.xlsx_writer import write_testpoint_xlsx
+    from .xlsx_writer import write_testpoint_xlsx
 
     with open(ch1_path, "r", encoding="utf-8") as f:
         ch1_data = json.load(f)
