@@ -1,0 +1,30 @@
+{
+  "module_name": "UPA",
+  "spec_name": "UPA 模块功能规格书",
+  "chapter": "chapter 1 功能特性",
+  "features": [
+    {
+      "feature": "数据通路特性",
+      "feature_id": "PA.001",
+      "chapter": "chapter 1 功能特性",
+      "subfeatures_l1": [
+        {
+          "subfeature_l1": "单向数据传输",
+          "subfeatures_l2": [
+            {
+              "subfeature_l2_overview": "数据传输基本功能",
+              "subfeature_l2_detail": "数据从源端传输到目的端",
+              "remarks": "来源: PA.001",
+              "stimulus": "【配置】配置upa_ctrl.en=1",
+              "checking": "by_direct_tc",
+              "coverage": "upa_data传输覆盖率",
+              "priority": "HIGH",
+              "activity": "BT",
+              "path": ""
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
