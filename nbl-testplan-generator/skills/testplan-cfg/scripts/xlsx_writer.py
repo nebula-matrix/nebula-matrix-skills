@@ -39,6 +39,35 @@ COL_W = 23  # Path to Source
 DATA_COLS = list(range(COL_H, COL_W + 1))
 
 
+def _clear_template_data(ws):
+    """Clear template example data starting from row 6."""
+    for row in range(6, ws.max_row + 1):
+        for col in range(1, 24):  # A-W columns
+            ws.cell(row=row, column=col).value = None
+
+
+def _apply_border_rectangle(ws):
+    """Apply borders to rectangular region A-W for all data rows."""
+    first_row = None
+    last_row = None
+
+    # Find first and last rows with content
+    for row in range(6, ws.max_row + 1):
+        has_content = any(ws.cell(row=row, column=col).value for col in range(1, 24))
+        if has_content:
+            if first_row is None:
+                first_row = row
+            last_row = row
+
+    if first_row is None:
+        return
+
+    # Apply borders to rectangle A-W
+    for row in range(first_row, last_row + 1):
+        for col in range(1, 24):  # A-W
+            ws.cell(row=row, column=col).border = STD_BORDER
+
+
 def write_ch1_xlsx(
     features_data: dict[str, Any],
     template_path: Path | str,
@@ -70,15 +99,19 @@ def write_ch1_xlsx(
     wb = load_workbook(template_path)
     ws = wb.active
 
+    # Clear template example data
+    _clear_template_data(ws)
+
     # Find the starting row (after template header rows)
-    # Template has rows 1-5 as header, row 6 starts chapter section
-    # We'll find the first empty row after row 6
-    start_row = _find_data_start_row(ws)
+    start_row = 6  # Start from row 6 after clearing
 
     # Write each feature
     features = features_data.get("features", [])
     for feature in features:
         start_row = _write_feature(ws, feature, start_row)
+
+    # Apply borders after all data is written
+    _apply_border_rectangle(ws)
 
     # Save output
     output_path.parent.mkdir(parents=True, exist_ok=True)
