@@ -490,9 +490,21 @@ def write_independent_ch2_xlsx(
 
     ch2_data = build_ch2_json(reg_data, covered_regs=set())
 
-    # Use xlsx_writer to write Ch2 data (treating it as Ch1 structure)
-    # Note: xlsx_writer.write_ch1_xlsx works with the same hierarchy structure
-    write_ch1_xlsx(ch2_data, template_path, output_path)
+    # Transform ch2_data structure to match xlsx_writer expectation
+    # ch2_data has "registers" with "register_name", but xlsx_writer expects "features" with "feature"
+    features_data = {
+        "chapter": ch2_data.get("chapter", ""),
+        "features": [
+            {
+                "feature": reg.get("register_name", ""),
+                "subfeatures_l1": reg.get("subfeatures_l1", []),
+            }
+            for reg in ch2_data.get("registers", [])
+        ],
+    }
+
+    # Use xlsx_writer to write Ch2 data
+    write_ch1_xlsx(features_data, template_path, output_path)
 
     return {
         "total_registers": len(ch2_data.get("registers", [])),
