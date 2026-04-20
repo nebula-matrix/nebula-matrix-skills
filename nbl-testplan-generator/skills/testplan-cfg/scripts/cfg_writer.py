@@ -71,6 +71,17 @@ _CFG_EXCLUDE_COMPILED = [re.compile(p) for p in CFG_EXCLUDE_PATTERNS]
 VALID_CFG_ACCESS = {"RW", "RWC", "WO", "RWW"}
 
 
+def _generate_fcov_path(reg_name: str, field_name: str) -> str:
+    """Generate coverage path for random test case.
+
+    Format: Group:$unit::{module_name}_fcov::{reg_name}_cg.{field_name}_cp
+    """
+    # Extract module name (first underscore prefix)
+    module_name = reg_name.split("_")[0] if "_" in reg_name else reg_name
+
+    return f"Group:$unit::{module_name}_fcov::{reg_name}_cg.{field_name}_cp"
+
+
 def _is_excluded_register(reg_name: str) -> bool:
     """Check if register should be excluded from Ch2."""
     for pat in _CFG_EXCLUDE_COMPILED:
@@ -327,10 +338,11 @@ def cross_ref_cfg(
                 "name": reg_name,
                 "skip": False,
                 "stimulus": stimulus,
-                "checking": "",
+                "checking": "随机用例",  # J列默认值
                 "coverage": "",
-                "path": "【反标路径暂无法确定】",
+                "path": "",  # Path will be generated per-field in build_ch2_json
                 "remarks": "; ".join(desc_parts) if desc_parts else "",
+                "fields": fields,  # Pass fields for later processing
             })
 
     return result
@@ -366,26 +378,75 @@ def build_ch2_json(
     for reg_info in xrefed:
         reg_name = reg_info["name"]
         is_skip = reg_info.get("skip", False)
+        fields = reg_info.get("fields", [])
 
-        subfeatures_l2: list[dict[str, Any]] = [{
-            "subfeature_l2_overview": "",  # F column: empty for Ch2
-            "subfeature_l2_detail": "",    # G column: empty for Ch2
-            "remarks": reg_info.get("remarks", ""),
-            "stimulus": reg_info.get("stimulus", ""),
-            "checking": reg_info.get("checking", ""),
-            "coverage": reg_info.get("coverage", ""),
-            "priority": "HIGH" if not is_skip else "",
-            "activity": "BT",
-            "path": reg_info.get("path", ""),
-            "skip": is_skip,
-        }]
+        # Generate per-field subfeatures_l1 for non-skipped registers
+        subfeatures_l1: list[dict[str, Any]] = []
+
+        if is_skip:
+            # Skipped registers: single entry with empty path
+            subfeatures_l1.append({
+                "subfeature_l1": reg_name,
+                "subfeatures_l2": [{
+                    "subfeature_l2_overview": "",
+                    "subfeature_l2_detail": "",
+                    "remarks": reg_info.get("remarks", ""),
+                    "stimulus": "",
+                    "checking": "",
+                    "coverage": "",
+                    "priority": "",
+                    "activity": "BT",
+                    "path": "",
+                    "skip": True,
+                }],
+            })
+        else:
+            # Non-skipped registers: generate per-field entry with coverage path
+            for field in fields:
+                field_name = field.get("name", "")
+                if not field_name or field_name.lower() == "rsv":
+                    continue
+
+                # Generate coverage path
+                path = _generate_fcov_path(reg_name, field_name)
+
+                subfeatures_l1.append({
+                    "subfeature_l1": field_name,
+                    "subfeatures_l2": [{
+                        "subfeature_l2_overview": "",
+                        "subfeature_l2_detail": "",
+                        "remarks": reg_info.get("remarks", ""),
+                        "stimulus": reg_info.get("stimulus", ""),
+                        "checking": reg_info.get("checking", ""),
+                        "coverage": reg_info.get("coverage", ""),
+                        "priority": "HIGH",
+                        "activity": "BT",
+                        "path": path,
+                        "skip": False,
+                    }],
+                })
+
+            # If no valid fields, create a single entry
+            if not subfeatures_l1:
+                subfeatures_l1.append({
+                    "subfeature_l1": reg_name,
+                    "subfeatures_l2": [{
+                        "subfeature_l2_overview": "",
+                        "subfeature_l2_detail": "",
+                        "remarks": reg_info.get("remarks", ""),
+                        "stimulus": reg_info.get("stimulus", ""),
+                        "checking": reg_info.get("checking", ""),
+                        "coverage": reg_info.get("coverage", ""),
+                        "priority": "HIGH",
+                        "activity": "BT",
+                        "path": "",
+                        "skip": False,
+                    }],
+                })
 
         ch2_registers.append({
             "register_name": reg_name,
-            "subfeatures_l1": [{
-                "subfeature_l1": reg_name,
-                "subfeatures_l2": subfeatures_l2,
-            }],
+            "subfeatures_l1": subfeatures_l1,
         })
 
     return {
