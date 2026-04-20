@@ -407,13 +407,17 @@ def build_ch2_json(
                 if not field_name or field_name.lower() == "rsv":
                     continue
 
+                # Extract field range and description for F column
+                frange = field.get("range", "")
+                fdesc = field.get("description", "")
+
                 # Generate coverage path
                 path = _generate_fcov_path(reg_name, field_name)
 
                 subfeatures_l1.append({
                     "subfeature_l1": field_name,
                     "subfeatures_l2": [{
-                        "subfeature_l2_overview": "",
+                        "subfeature_l2_overview": f"bit{frange} {fdesc}",
                         "subfeature_l2_detail": "",
                         "remarks": reg_info.get("remarks", ""),
                         "stimulus": reg_info.get("stimulus", ""),
