@@ -35,7 +35,7 @@
     {
       "name": "nbl-testplan-generator",
       "source": "./nbl-testplan-generator",
-      "description": "数字芯片验证测试计划生成器，从功能规格书（.docx）和寄存器配置（.xlsx）生成结构化测试点文档，支持 D-E-F/G 层级分解",
+      "description": "数字芯片验证测试计划生成器插件。从功能规格书（.docx）和寄存器配置手册（.xlsx）生成功能特性（Chapter 1）的结构化测试点 xlsx 文档，支持 D-E-F/G 层级分解和 SystemVerilog 覆盖率路径生成",
       "category": "development",
       "tags": ["testplan", "verification", "chip", "document"],
       "keywords": ["testplan", "verification", "chip", "docx", "xlsx", "test", "generator"]

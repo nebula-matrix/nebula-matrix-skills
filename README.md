@@ -95,18 +95,19 @@ nebula-matrix-skills/
 
 ### nbl-testplan-generator
 
-**描述**: 数字芯片验证测试计划生成器，从功能规格书（.docx）和寄存器配置（.xlsx）生成结构化测试点文档
+**描述**: 数字芯片验证测试计划生成器插件。从功能规格书（.docx）和寄存器配置手册（.xlsx）生成功能特性（Chapter 1）的结构化测试点 xlsx 文档
 
 **分类**: development
 
 **标签**: testplan, verification, chip, document
 
 **功能**:
-- 从功能规格书（.docx）解析模块功能特性
-- 从寄存器手册（.xlsx）提取寄存器配置信息
-- 生成 D-E-F/G 层级结构化测试点文档
-- 支持功能特性（testplan-func）和配置特性（testplan-cfg）分开生成
-- 提供 review 刷新机制，支持增量更新测试点
+- 调用 `nbl-docx-to-markdown` skill 将 Word 功能规格书转换为 Markdown
+- 将 Markdown 解析为 `spec_tree.json`，提取模块特性和交叉引用索引
+- 将寄存器手册 xlsx 解析为 `reg_info.json`
+- Claude 按 Feature 分块交叉引用分析，自动生成 D→E→F→G 层级分解
+- 自动生成基于英文缩写 `_eng_id` 的 SystemVerilog 覆盖率路径（W 列）
+- 生成 `fs_reg_slv_review.md` 记录不确定内容，支持二次刷新
 
 ### nbl-testplan-creator
 
