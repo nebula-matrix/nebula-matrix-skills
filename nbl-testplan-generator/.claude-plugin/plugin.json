@@ -1,6 +1,0 @@
-{
-  "name": "nbl-testplan-generator",
-  "version": "2.0.0",
-  "description": "数字芯片验证测试计划生成器，从功能规格书（.docx）和寄存器配置（.xlsx）生成结构化测试点文档。支持功能特性（testplan-func）和配置特性（testplan-cfg）分开生成。",
-  "skills": "./skills"
-}
