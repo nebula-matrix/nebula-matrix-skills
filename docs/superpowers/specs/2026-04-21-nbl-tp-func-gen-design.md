@@ -250,9 +250,11 @@ Phase 4-D: 用户确认（阻塞等待）
     {
       "feature": "报文编辑范围",
       "feature_id": "PA.1",
+      "_eng_id": "pkt_edt",
       "subfeatures_l1": [
         {
           "subfeature_l1": "替换动作",
+          "_eng_id": "repl",
           "subfeatures_l2": [
             {
               "subfeature_l2": "正常场景-TTL字段替换",
@@ -296,12 +298,20 @@ Phase 4-D: 用户确认（阻塞等待）
 
 **关键约定**：
 
-- `_confidence` 字段：\`confirmed\`（spec/reg 中明确提及）或 \`inferred\`（推断内容）
-- `path` 字段：使用 **英文标识符**，不直接使用中文。规则：
-  - `by_checker` → `Group:$unit::{module_name}_fcov::cg_{eng_feature_id}.cp_{eng_subfeature_id}`
-  - `by_direct_tc` → `Group:$unit::{module_name}_direct_fcov::direct_{eng_feature_id}_{eng_subfeature_id}`
-  - `by_assertion` → `Group:$unit::{module_name}_assert::assert_{eng_feature_id}_{eng_subfeature_id}`
-  - 中文 Feature/Subfeature 到英文缩写的映射在 `combine_writer.py` 中实现（或通过 `_eng_id` 字段提供）
+- `_confidence` 字段：`confirmed`（spec/reg 中明确提及）或 `inferred`（推断内容）
+- `_eng_id` 字段（重要）：**每个 Feature 和 Subfeature 必须分配一个英文缩写标识符**，用于生成 W 列覆盖率路径。规则：
+  - 取中文功能名称的核心关键词，转换为英文缩写
+  - 长度控制在 **4-12 个字符**
+  - **同一模块内不重复**
+  - 示例：
+    - "报文编辑范围" → `pkt_edt`
+    - "替换动作" → `repl`
+    - "TTL动作" → `ttl`
+- `path` 字段：使用 **英文标识符**（来自 `_eng_id`），不直接使用中文。规则：
+  - `by_checker` → `Group:$unit::{module_name}_fcov::cg_{feature_eng_id}.cp_{subfeature_eng_id}`
+  - `by_direct_tc` → `Group:$unit::{module_name}_direct_fcov::direct_{feature_eng_id}_{subfeature_eng_id}`
+  - `by_assertion` → `Group:$unit::{module_name}_assert::assert_{feature_eng_id}_{subfeature_eng_id}`
+  - `_eng_id` 的冒泡规则：子节点若无显式 `_eng_id`，继承父级，但在 path 中使用最近层级明确的 `_eng_id`
 - `remarks` 中推断内容标注 `⚠ [推断]`
 - `stimulus` 中 `【配置】` 和 `【激励】` 标记为红色字体（在 xlsx 输出时处理）
 

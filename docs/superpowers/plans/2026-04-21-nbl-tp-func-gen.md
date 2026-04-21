@@ -1262,6 +1262,7 @@ def write_testplan_xlsx(
     current_row += 1
 
     features = testplan_data.get("features", [])
+    module_name = testplan_data.get("module_name", "module")
 
     for feature in features:
         feat_row = current_row
@@ -1270,11 +1271,17 @@ def write_testplan_xlsx(
         _apply_style(ws.cell(row=current_row, column=4), STD_FONT, LEFT_ALIGN_VCENTER)
         current_row += 1
 
+        # Determine feature-level _eng_id for bubbling
+        feature_eng_id = feature.get("_eng_id", "")
+
         for sub_l1 in feature.get("subfeatures_l1", []):
             # E column: Subfeature L1 (outline level 1)
             ws.cell(row=current_row, column=5).value = sub_l1.get("subfeature_l1", "")
             _apply_style(ws.cell(row=current_row, column=5), STD_FONT, LEFT_ALIGN_VCENTER)
             current_row += 1
+
+            # Subfeature L1 _eng_id, fall back to feature if absent
+            sub_l1_eng_id = sub_l1.get("_eng_id", feature_eng_id)
 
             for sub_l2 in sub_l1.get("subfeatures_l2", []):
                 # F column: Subfeature L2 (outline level 2)
@@ -1284,18 +1291,30 @@ def write_testplan_xlsx(
                 confidence = sub_l2.get("_confidence", "confirmed")
                 l3_list = sub_l2.get("subfeatures_l3", [])
 
+                # Subfeature L2 _eng_id, fall back to sub_l1 then feature
+                sub_l2_eng_id = sub_l2.get("_eng_id", sub_l1_eng_id)
+
                 if l3_list:
                     # F is aggregate; data goes on G rows for each L3
                     sub_l2_row = current_row
                     current_row += 1
                     for sub_l3 in l3_list:
                         ws.cell(row=current_row, column=7).value = sub_l3.get("subfeature_l3", "")
-                        _write_data_row(ws, current_row, sub_l3, verify_level, confidence, STD_FONT, RED_FONT, LEFT_ALIGN_VCENTER)
+                        # Inject _eng_id hierarchy into L3 data dict
+                        row_data = dict(sub_l3)
+                        row_data.setdefault("_feature_eng_id", feature_eng_id)
+                        row_data.setdefault("_subfeature_eng_id", sub_l2_eng_id)
+                        row_data["_module"] = module_name
+                        _write_data_row(ws, current_row, row_data, verify_level, confidence, STD_FONT, RED_FONT, LEFT_ALIGN_VCENTER)
                         current_row += 1
                 else:
                     # F is minimum granularity, write data columns here
-                    sub_l2["subfeature_l3"] = ""  # Ensure field exists for _write_data_row
-                    _write_data_row(ws, current_row, sub_l2, verify_level, confidence, STD_FONT, RED_FONT, LEFT_ALIGN_VCENTER)
+                    row_data = dict(sub_l2)
+                    row_data["subfeature_l3"] = ""  # Ensure field exists
+                    row_data.setdefault("_feature_eng_id", feature_eng_id)
+                    row_data.setdefault("_subfeature_eng_id", sub_l2_eng_id)
+                    row_data["_module"] = module_name
+                    _write_data_row(ws, current_row, row_data, verify_level, confidence, STD_FONT, RED_FONT, LEFT_ALIGN_VCENTER)
                     current_row += 1
 
         content_max_row = max(content_max_row, current_row)
@@ -1360,7 +1379,11 @@ def _write_data_row(
     # W: path
     path = data.get("path", "")
     if not path:
-        path = _build_path(data, data.get("checking", "by_checker"))
+        feature_eng_id = data.get("_feature_eng_id", "")
+        subfeature_eng_id = data.get("_subfeature_eng_id", "")
+        module = data.get("_module", "module")
+        checking = data.get("checking", "by_checker")
+        path = _build_path(feature_eng_id, subfeature_eng_id, checking, module)
     ws.cell(row=row, column=23).value = path
     ws.cell(row=row, column=23).font = font
     ws.cell(row=row, column=23).alignment = alignment
@@ -1382,21 +1405,27 @@ def _color_stimulus_markers(ws, row: int, col: int, text: str) -> None:
         ws.cell(row=row, column=col).font = Font(name="微软雅黑", size=10)
 
 
-def _build_path(data: dict, checking: str) -> str:
-    """Build the W column path from checking type."""
-    # This is a placeholder: ideally eng_feature_id / eng_subfeature_id are provided
-    # For now use raw feature/subfeature names or empty
-    feature = data.get("_feature_eng", "")
-    subfeature = data.get("_subfeature_eng", "")
-    if not feature:
+def _build_path(
+    feature_eng_id: str,
+    subfeature_eng_id: str,
+    checking: str,
+    module: str = "module",
+) -> str:
+    """Build the W column path from checking type and english IDs.
+
+    Uses `_eng_id` hierarchy:
+    - feature_eng_id: via _eng_id bubbling from feature
+    - subfeature_eng_id: via _eng_id bubbling from subfeature_l1/l2
+    """
+    if not feature_eng_id:
         return ""
-    module = data.get("_module", "module")
+    sub = subfeature_eng_id or feature_eng_id
     if checking == "by_checker":
-        return f"Group:$unit::{module}_fcov::cg_{feature}.cp_{subfeature}"
+        return f"Group:$unit::{module}_fcov::cg_{feature_eng_id}.cp_{sub}"
     elif checking == "by_direct_tc":
-        return f"Group:$unit::{module}_direct_fcov::direct_{feature}_{subfeature}"
+        return f"Group:$unit::{module}_direct_fcov::direct_{feature_eng_id}_{sub}"
     elif checking == "by_assertion":
-        return f"Group:$unit::{module}_assert::assert_{feature}_{subfeature}"
+        return f"Group:$unit::{module}_assert::assert_{feature_eng_id}_{sub}"
     return ""
 
 
@@ -1827,6 +1856,7 @@ Rewrite: `nbl-testplan-generator/skills/nbl-tp-func-gen/SKILL.md`
 具体 SKILL.md 内容参考 design doc 第6章，并且必须：
 - 包含 D-E-F-G 层级展开的具体规则
 - 包含 J-W 路径映射规则（使用英文标识符）
+- 包含 `_eng_id` 生成规则：每个 Feature/Subfeature 分配英文缩写（4-12字符），冒泡继承
 - 包含 `【配置】` / `【激励】` 必须标红的要求
 - 包含 `_confidence: inferred` 标注 `⚠ [推断]` 的要求
 - 包含 `fs_reg_slv_review.md` 的结构模板
@@ -2092,6 +2122,7 @@ EOF
 | 5. xlsx 输出规范（格式/font/border） | Task 3 | ✅ 覆盖 |
 | 5.3 D-E-F-G层级 | Task 3 | ✅ 覆盖 |
 | 5.4 J-W关系    | Task 3 + 4 | ✅ 覆盖 |
+| 5.4 _eng_id 冒泡 | Task 3 + 4 | ✅ 覆盖 |
 | 6. SKILL.md交互流程 | Task 4 | ✅ 覆盖 |
 | 7. 脚本设计     | Task 2 + 3 | ✅ 覆盖 |
 | 9. 移植性($TP_WORKDIR) | Task 1 + 4 | ✅ 覆盖 |
