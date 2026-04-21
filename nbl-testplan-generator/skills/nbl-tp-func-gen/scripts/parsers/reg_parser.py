@@ -90,7 +90,7 @@ def _parse_register_sheet(ws) -> list[dict[str, Any]]:
         reg_name = row_values[col_map.get("reg_name", 0)].strip() if "reg_name" in col_map else ""
         field_name = row_values[col_map.get("field_name", 0)].strip() if "field_name" in col_map else ""
 
-        if reg_name and (not field_name or field_name.lower() == reg_name.lower()):
+        if reg_name:
             if current_reg is not None:
                 registers.append(current_reg)
             addr = row_values[col_map.get("addr", 0)] if "addr" in col_map else ""
