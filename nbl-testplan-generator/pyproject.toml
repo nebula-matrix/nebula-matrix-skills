@@ -1,6 +1,6 @@
 [project]
 name = "nbl-testplan-generator"
-version = "3.0.1"
+version = "3.0.2"
 description = "数字芯片验证测试计划生成器，支持功能特性和配置特性的结构化测试点生成"
 requires-python = ">=3.12"
 dependencies = [
