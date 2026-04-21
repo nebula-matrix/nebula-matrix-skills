@@ -31,3 +31,9 @@ def sample_spec_md(fixtures_dir) -> Path:
 def sample_template_xlsx(fixtures_dir) -> Path:
     """Return path to template xlsx file."""
     return fixtures_dir / "testplan_template.xlsx"
+
+
+@pytest.fixture
+def sample_reg_xlsx(fixtures_dir) -> Path:
+    """Return path to sample register xlsx file."""
+    return fixtures_dir / "upa_regs.xlsx"
