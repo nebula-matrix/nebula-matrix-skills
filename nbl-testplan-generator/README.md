@@ -39,10 +39,14 @@
 
 ## 技术栈
 
-- Python >= 3.12
+- Python >= 3.12（通过 uv 管理）
 - openpyxl >= 3.1.0
 - pytest >= 8.0.0（开发）
 - LibreOffice + Pandoc（通过 nbl-docx-to-markdown）
+
+## 依赖管理
+
+本项目使用 [uv](https://github.com/astral-sh/uv) 进行 Python 环境及依赖管理。所有脚本调用均通过 `uv run` 执行，不直接使用系统 Python 或 pip/apt。
 
 ## 目录结构
 
