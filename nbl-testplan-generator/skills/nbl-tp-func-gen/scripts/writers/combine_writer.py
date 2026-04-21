@@ -78,6 +78,9 @@ def write_testplan_xlsx(
     module_name = testplan_data.get("module_name", "module")
 
     for feature in features:
+        # Skip config-category features (Chapter 2 "配置特性") — only Chapter 1 shown in xlsx
+        if feature.get("_category") == "config":
+            continue
         # D column: Feature (outline level 0)
         ws.cell(row=current_row, column=4).value = feature.get("feature", "")
         _apply_style(ws.cell(row=current_row, column=4), STD_FONT, LEFT_ALIGN_VCENTER)
