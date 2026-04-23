@@ -1,0 +1,12 @@
+{
+  "name": "nbl-testplan-creator",
+  "description": "NBL企业IC验证测试计划生成器，采用 Markdown-first 工作流从规格文档逐章节生成结构化测试点",
+  "version": "1.0.0",
+  "author": {
+    "name": "Nebula Matrix Team"
+  },
+  "keywords": ["testplan", "verification", "chip", "ic", "markdown", "testpoint"],
+  "category": "development",
+  "tags": ["testplan", "verification", "chip", "testpoint"],
+  "skills": "./skills"
+}
