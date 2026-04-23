@@ -97,22 +97,22 @@ skill-name/
      - 整体工程不大（1-3 个脚本内可完成）
      - 不需要复杂的项目结构
    - **实现方式**：
-     - 在 skill 目录下使用 `uv` 创建虚拟环境
-     - 创建 `pyproject.toml` 定义依赖
-     - 所有脚本使用 `uv run` 执行
+     - 在 `scripts/` 目录下使用 `uv` 创建 Python 项目
+     - 在 `scripts/pyproject.toml` 中定义依赖
+     - 在 `scripts/` 目录下直接放置脚本文件
+     - 使用 `uv run --project scripts/ python scripts/main.py` 执行
      - **不要**使用 pip/venv 传统方式
    - **目录结构**：
      ```
      skill-name/
      ├── SKILL.md
-     ├── pyproject.toml      # uv 项目配置
-     ├── scripts/
-     │   ├── __init__.py
-     │   └── main.py         # 主入口脚本
-     └── src/                # 可选，如果代码较多
+     └── scripts/
+         ├── pyproject.toml      # uv 项目配置
+         ├── main.py             # 主入口脚本
+         └── helper.py           # 可选的其他脚本
      ```
-   - **调用方式**：`uv run python scripts/main.py`
-   - **优势**：依赖管理简洁，启动速度快，避免污染系统环境
+   - **调用方式**：从 skill 根目录执行 `uv run --project scripts/ python scripts/main.py`
+   - **优势**：依赖管理简洁，启动速度快，避免污染系统环境，Python 代码与 skill 资源分离清晰
 
 3. **高复杂度** - 大型项目或需要 CLI 接口
    - **适用场景**：
@@ -120,25 +120,30 @@ skill-name/
      - 需要提供命令行接口（CLI）供用户直接调用
      - 需要作为独立工具安装到系统
    - **实现方式**：
-     - 使用 `uv` 创建完整的 Python 项目
-     - 配置 `pyproject.toml` 定义入口点（entry points）
-     - 使用 `uv tools install --editable` 安装为系统 CLI 工具
+     - 在 `scripts/` 目录下使用 `uv` 创建完整的 Python 项目
+     - 在 `scripts/pyproject.toml` 中定义入口点（entry points）
+     - 使用 `uv tool install --editable scripts/` 安装为系统 CLI 工具
      - 在 SKILL.md 中描述 CLI 命令的使用方式
    - **目录结构**：
      ```
      skill-name/
      ├── SKILL.md
-     ├── pyproject.toml      # 包含 [project.scripts] 入口点
-     ├── src/
-     │   └── skill_name/
-     │       ├── __init__.py
-     │       ├── cli.py      # CLI 入口
-     │       └── ...
-     └── scripts/            # 可选的辅助脚本
+     ├── scripts/
+     │   ├── pyproject.toml          # 包含 [project.scripts] 入口点
+     │   ├── skill_name/             # 包代码
+     │   │   ├── __init__.py
+     │   │   ├── __main__.py
+     │   │   ├── cli.py              # CLI 入口
+     │   │   ├── commands/           # 子命令模块
+     │   │   ├── core/               # 核心逻辑
+     │   │   └── ...                 # 其他模块
+     │   └── ... 其他辅助脚本
+     ├── assets/
+     └── references/
      ```
-   - **安装**：`uv tools install --editable .`
-   - **调用方式**：直接调用 CLI 命令（如 `my-skill-command --help`）
-   - **优势**：用户可以像使用系统命令一样使用，集成度高
+   - **安装**：`uv tool install --editable scripts/`
+   - **调用方式**：安装后直接调用 CLI 命令（如 `my-skill-command --help`）或 `python -m skill_name`
+   - **优势**：所有 Python 代码集中在 `scripts/` 下，与 skill 的 `assets/` 和 `references/` 目录分离清晰
 
 **通用原则**：
 - **节省 token**：脚本可以在不加载到上下文的情况下执行
