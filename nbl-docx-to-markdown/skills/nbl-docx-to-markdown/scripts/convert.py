@@ -15,12 +15,42 @@ import re
 import shutil
 import subprocess
 import sys
+import zipfile
 from pathlib import Path
+
+# Try to import accept_revisions (requires python3-uno)
+try:
+    import accept_revisions
+    ACCEPT_REVISIONS_AVAILABLE = True
+except ImportError:
+    ACCEPT_REVISIONS_AVAILABLE = False
+
+
+def check_uno_available() -> tuple[bool, str]:
+    """Check if python3-uno (UNO bridge) is available.
+
+    Returns:
+        (available: bool, path_hint: str)
+        path_hint is empty if available, otherwise shows where to look.
+    """
+    # Check common installation paths
+    search_paths = [
+        "/usr/lib/python3/dist-packages",
+        "/usr/lib/python3.11/dist-packages",
+        "/usr/lib/python3.12/dist-packages",
+        "/usr/lib/python3.13/dist-packages",
+        "/usr/local/lib/python3/dist-packages",
+    ]
+    for p in search_paths:
+        if os.path.exists(os.path.join(p, "uno.py")):
+            return True, ""
+    return False, search_paths[0]
 
 
 def check_dependencies() -> None:
     """Check if required external tools are installed."""
-    missing = []
+    missing_tools = []
+    missing_libs = []
 
     # Check LibreOffice
     try:
@@ -30,9 +60,9 @@ def check_dependencies() -> None:
             timeout=5
         )
         if result.returncode != 0:
-            missing.append("libreoffice")
+            missing_tools.append("libreoffice")
     except (subprocess.TimeoutExpired, FileNotFoundError):
-        missing.append("libreoffice")
+        missing_tools.append("libreoffice")
 
     # Check Pandoc
     try:
@@ -42,25 +72,46 @@ def check_dependencies() -> None:
             timeout=5
         )
         if result.returncode != 0:
-            missing.append("pandoc")
+            missing_tools.append("pandoc")
     except (subprocess.TimeoutExpired, FileNotFoundError):
-        missing.append("pandoc")
+        missing_tools.append("pandoc")
 
-    if missing:
-        print("❌ Missing required dependencies:")
-        for dep in missing:
-            print(f"   - {dep}")
-        print("\n📦 Installation instructions:")
-        print("   Ubuntu/Debian: sudo apt install libreoffice-writer pandoc")
-        print("   macOS:         brew install libreoffice pandoc")
-        print("   Other:         https://www.libreoffice.org/download")
-        print("                  https://pandoc.org/installing.html")
-        sys.exit(1)
+    # Check python3-uno (required for accept_revisions)
+    uno_ok, _ = check_uno_available()
+    if not uno_ok:
+        missing_libs.append("python3-uno")
+
+    has_errors = bool(missing_tools) or bool(missing_libs)
+    if not has_errors:
+        return
+
+    print("❌ Missing dependencies:")
+    for dep in missing_tools:
+        print(f"   - Tool:  {dep}")
+    for dep in missing_libs:
+        print(f"   - Lib:   {dep} (revision acceptance requires this)")
+
+    print("\n📦 Install command:")
+    print("   sudo apt install libreoffice-writer pandoc python3-uno")
+    print("   (or: sudo apt install python3-uno libreoffice-core-nogui)")
+    sys.exit(1)
 
 
 def sanitize_filename(name: str) -> str:
     """Convert filename to safe format: spaces to underscores."""
     return name.replace(' ', '_')
+
+
+def docx_has_revisions(docx_path: Path) -> bool:
+    """Check if DOCX contains track changes (w:ins / w:del elements)."""
+    try:
+        with zipfile.ZipFile(docx_path) as z:
+            if 'word/document.xml' in z.namelist():
+                doc_xml = z.read('word/document.xml').decode('utf-8')
+                return '<w:ins' in doc_xml or '<w:del' in doc_xml
+    except (zipfile.BadZipFile, KeyError, Exception):
+        pass
+    return False
 
 
 def create_work_dir(docx_path: Path, output_dir: Path | None = None) -> Path:
@@ -530,6 +581,25 @@ def main():
     print(f"📁 Work directory: {work_dir}")
     print(f"📁 HTML source: {html_dir}")
     print(f"📁 Markdown output: {md_dir}")
+
+    # Step 0: Accept all revisions if needed
+    print("\n--- Step 0: Accept all revisions ---")
+    if not ACCEPT_REVISIONS_AVAILABLE:
+        print("   ℹ️  accept_revisions module not available, skipping")
+    elif docx_has_revisions(docx_path):
+        accepted_docx = work_dir / f"{base_name}_accepted.docx"
+        try:
+            new_path = accept_revisions.accept_all_revisions(
+                str(docx_path), str(accepted_docx)
+            )
+            docx_path = Path(new_path)
+            base_name = sanitize_filename(docx_path.stem)
+            print(f"   ✅ Using accepted revision file: {docx_path}")
+        except Exception as e:
+            print(f"   ⚠️  Failed to accept revisions: {e}")
+            print("   Using original file")
+    else:
+        print("   ✅ No track changes found, using original file")
 
     print("\n--- Step 1: LibreOffice DOCX -> HTML ---")
     html_path, base_name = libreoffice_to_html(docx_path, work_dir)

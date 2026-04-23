@@ -108,16 +108,29 @@ Pandoc 转换后会自动执行：
 
 ## 依赖要求
 
-- LibreOffice (`libreoffice` 命令)
-- Pandoc (`pandoc` 命令)
+- **LibreOffice** (`libreoffice` 命令) — DOCX 转 HTML
+- **Pandoc** (`pandoc` 命令) — HTML 转 Markdown
+- **python3-uno** (可选但推荐) — 接受 DOCX 审阅修订，使转换结果更干净
 
 安装依赖：
 ```bash
 # Ubuntu/Debian
-sudo apt install libreoffice-writer pandoc
+sudo apt update
+sudo apt install libreoffice-writer pandoc python3-uno
+
+# 如果不需要头less模式（如有GUI）
+sudo apt install libreoffice-writer pandoc python3-uno
 
 # macOS
 brew install libreoffice pandoc
+# (macOS 上 python3-uno 通常通过 LibreOffice 自带 Python 提供)
+```
+
+**验证安装**：
+```bash
+libreoffice --version   # 应输出版本号
+pandoc --version        # 应输出版本号
+python3 -c "import sys; sys.path.insert(0, '/usr/lib/python3/dist-packages'); import uno; print('uno OK')"
 ```
 
 ## 输出示例
