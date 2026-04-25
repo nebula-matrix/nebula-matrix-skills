@@ -3,7 +3,6 @@
   "version": "1.0.0",
   "description": "HTML to PowerPoint converter for NBL PPT Builder",
   "scripts": {
-    "install": "npm install",
     "generate": "node generate_pptx.js"
   },
   "dependencies": {
