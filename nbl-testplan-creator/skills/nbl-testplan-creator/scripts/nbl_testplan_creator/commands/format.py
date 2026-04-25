@@ -2,6 +2,7 @@
 
 from pathlib import Path
 import csv
+import re
 
 
 def cmd_format(manager, args) -> int:
@@ -98,7 +99,12 @@ def _format_excel(data: dict, output: Path | None) -> int:
                     tp.get('source', ''),
                 ])
 
-    out_path = output or Path('testplan.xlsx')
+    if output:
+        out_path = output
+    else:
+        title = data.get('document_title', 'testplan')
+        safe = re.sub(r'[^\w\s]', '', title).replace(' ', '_')
+        out_path = Path(f'{safe}_testplan.xlsx')
     wb.save(out_path)
     print(f"已生成 Excel: {out_path}")
     return 0

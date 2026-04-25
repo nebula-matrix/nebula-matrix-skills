@@ -5,11 +5,11 @@
 ## Prompt 模板
 
 ````
-你是 IC 验证测试点生成专家。分析以下章节，将结果追加到主 Markdown 文件 `.tp_cache/testplan_raw.md` 中。
+你是 IC 验证测试点生成专家。分析以下章节，将结果追加到主 Markdown 文件 `.tp_cache/testplan_draft.md` 中。
 
 【全局上下文】
 文档标题: {document_title}
-当前 Feature Tree: {读取 .tp_cache/testplan_raw.md，提取所有 ## 和 ### heading 结构}
+当前 Feature Tree: {读取 .tp_cache/testplan_draft.md，提取所有 ## 和 ### heading 结构}
 已分析章节摘要: {前面已完成章节的内容统计摘要}
 
 【章节信息】
@@ -26,9 +26,9 @@
 - 确定挂载到哪个 Feature（从已有 Feature 中选择，或新增）
 - 如需新增 Feature，在 md 中追加 `## Feature名称` heading
 
-**步骤2：在 .tp_cache/testplan_raw.md 中追加内容**
+**步骤2：在 .tp_cache/testplan_draft.md 中追加内容**
 
-读取当前的 `.tp_cache/testplan_raw.md`，确认已有 Feature/SubFeature 结构后，在文件末尾追加本章内容。
+读取当前的 `.tp_cache/testplan_draft.md`，确认已有 Feature/SubFeature 结构后，在文件末尾追加本章内容。
 
 追加格式（直接串行追加到主文件时，Feature 已在 md 中时无需重复写 ## heading）：
 
@@ -50,17 +50,22 @@
 
 | tp_name | source | stimulus | checking | coverage_requirements | priority | category |
 |---------|---------|----------|----------|----------------------|----------|----------|
-| 正常功能测试 | 3.1 队列管理 - 模块支持配置最大2048个接收队列 | 【配置】具体配置<br>【激励】具体激励 | by_checker | queue_size_pow∈[5,15], queue_num∈{1,512,1024,2048} | HIGH | normal |
-| 边界值测试 | 3.2.1 队列深度 - 验证queue_size_pow最大最小值边界 | 【配置】边界值 | by_checker | queue_size_pow={5,15} | HIGH | boundary |
-| 组合场景测试 | 3.2.2 队列映射 - 队列数量与映射模式组合验证 | 【配置】多条件组合 | by_checker | 2K_map_enable x queue_num={512,1024,2048} | MID | combination |
-| 联动场景测试 | 4.3 中断处理 - 与中断配置章节联动验证 | 【配置】跨章节联动 | by_checker | interrupt_vector x queue_notify | HIGH | linkage |
-| 异常场景测试 | 5.1 错误处理 - 非法配置值检测 | 【配置】非法值 | by_assertion | illegal_cfg_value, out_of_range_num | HIGH | exception |
+| 正常功能测试 | 3.1 队列管理 - 模块支持配置最大2048个接收队列 | 【配置】具体配置<br>【激励】具体激励 | 结果一致性校验（checker） | queue_size_pow∈[5,15], queue_num∈{1,512,1024,2048} | HIGH | normal |
+| 边界值测试 | 3.2.1 队列深度 - 验证queue_size_pow最大最小值边界 | 【配置】边界值 | 结果一致性校验（checker） | queue_size_pow={5,15} | HIGH | boundary |
+| 组合场景测试 | 3.2.2 队列映射 - 队列数量与映射模式组合验证 | 【配置】多条件组合 | 结果一致性校验（checker） | 2K_map_enable x queue_num={512,1024,2048} | MID | combination |
+| 联动场景测试 | 4.3 中断处理 - 与中断配置章节联动验证 | 【配置】跨章节联动 | 结果一致性校验（checker） | interrupt_vector x queue_notify | HIGH | linkage |
+| 异常场景测试 | 5.1 错误处理 - 非法配置值检测 | 【配置】非法值 | 断言监控：非法配置时中断上报 | illegal_cfg_value, out_of_range_num | HIGH | exception |
 
 > **coverage_requirements 列强制规范**（重点！常见错误）：
 > - **必须填写**该测试点需要覆盖的具体取值/场景，作为后续 covergroup 实现的参考输入
 > - **合法的填写形式**：值域枚举（`timeout∈{0,64,1023}`）、边界点（`queue_size_pow={5,15}`）、组合矩阵（`mode∈{0,1} × cache_num∈{32,64,128}`）
-> - **禁止**填写：①规格编号如【UVN.001.002】（spec_id 属性块已有）；②检查过程描述如"验证队列正确"（那是 checking 列的职责）；③笼统的"正常功能验证"
+> - **禁止**填写：①规格编号如【UVN.001.002】（spec_id 属性块已有）；②笼统的"正常功能验证"
 > - 每个测试点独立填写，不偷懒不写或简写
+
+> **source 列填写规范**：
+> - 填写原始规格的章节小节标题+简要概括，如 `6.1.2 FIFO读写 - 数据FIFO`、`PA.007.006 - 端口速率`
+> - **禁止**使用 `sections.json` 的内部 ID（`S001`、`S002`、`S006` 等），这些是中间产物，不应出现在最终交付物中
+> - 如果测试点无具体来源可不填，留空即可
 
 ### {sub_feature_name}
 
@@ -93,7 +98,7 @@
 - 若同类条目大量重复（如多个 FIFO、RAM 的错误场景），可用概括性表述（如 `ram_id∈{0,1,2,...}`、`fifo_full×{desc_fifo, data_fifo, info_fifo}`）或 `...` 压缩，避免枚举十几个相似项导致表格过宽
 
 **注意事项**：
-- 不要修改 .tp_cache/testplan_raw.md 中已有的其他章节内容，只在本章内容区域追加
+- 不要修改 .tp_cache/testplan_draft.md 中已有的其他章节内容，只在本章内容区域追加
 - 如果本章内容关联已有的 SubFeature 但已有其他章节的 testpoints，请在同一 ### heading 下追加新表格行
 - 参考已分析章节内容，识别跨章节联动关系
 - feature_name 和 sub_feature_name 中不要包含 `.`

@@ -3,7 +3,7 @@ name = "nbl_testplan_creator"
 version = "1.0.0"
 description = "NBL IC verification testplan management tool"
 requires-python = ">=3.10"
-dependencies = []
+dependencies = ["openpyxl>=3.1"]
 
 [project.scripts]
 nbl-testplan = "nbl_testplan_creator.cli:main"

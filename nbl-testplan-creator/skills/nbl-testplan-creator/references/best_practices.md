@@ -20,7 +20,7 @@
 **动态调整时机**：
 - 当某个章节内容明显不适合现有 Feature 时，果断新增
 - 避免强行挂载导致逻辑混乱
-- 新增 Feature 后直接追加到 `.tp_cache/testplan_raw.md`
+- 新增 Feature 后直接追加到 `.tp_cache/testplan_draft.md`
 
 ## 3. 弹性执行策略
 
@@ -35,9 +35,9 @@
    - 同一 Feature 的全部 SubFeature 和 Testpoint 由同一个 subagent 负责，合并后该 Feature 内容自然连续
    - 将关联性强的相邻 Feature 合并到同一组，控制每组涉及的章节总行数在合理范围
 2. 针对每组 Feature，主 Agent 创建一个独立的 subagent，将对应 Feature 及其涉及的章节信息作为上下文传入；该 subagent 自行读取 `sections.json` 定位相关章节、逐节分析并生成 `.tp_cache/partial_{N}.md`
-3. 主 Agent 调用 `nbl-testplan merge` 合并所有 partial 文件到 `testplan_raw.md`
+3. 主 Agent 调用 `nbl-testplan merge` 合并所有 partial 文件到 `testplan_draft.md`
    ```bash
-   nbl-testplan merge .tp_cache/testplan_raw.md .tp_cache/partial_*.md
+   nbl-testplan merge .tp_cache/testplan_draft.md .tp_cache/partial_*.md
    ```
 
    **merge 前会自动调用 `check` 检查所有 partial 文件，如果有格式错误则拒绝合并并输出 AI 修复建议。**
@@ -98,7 +98,7 @@
 | 字段 | 要求 |
 |------|------|
 | `stimulus` | 配置和激励要具体可执行，使用【配置】和【激励】标签区分 |
-| `checking` | 明确检查方式：`by_checker` / `by_direct_tc` / `by_assertion` |
+| `checking` | 检查结果正确的条件：一般场景写「结果一致性校验（checker）」；corner/难随机场景写「定向用例验证」；特殊边界时序写「断言监控：xxx」 |
 | `coverage_requirements` | 枚举需覆盖的取值/场景（值域、边界点、组合矩阵等），作为 covergroup 实现参考 |
 | `category` | 标记测试点类别：`normal` / `boundary` / `combination` / `linkage` / `exception` |
 | `spec_id` | 关联到规格条款，如 `【UVN.001.004】` |
@@ -153,9 +153,9 @@
 **核心文件**：
 - `.tp_cache/sections.json`：阶段1输出，粗框架划分
 - `.tp_cache/feature_plan.json`：阶段2输出，Feature 初步规划（动态更新）
-- `.tp_cache/testplan_raw.md`：阶段3主工作文件，Markdown 为唯一数据源
+- `.tp_cache/testplan_draft.md`：阶段3主工作文件，Markdown 为唯一数据源
 - `.tp_cache/features.json`：阶段3b输出，统一三级结构数据
-- `testplan.md`：阶段4输出，最终测试计划文档（CWD）
+- `{doc_name}_testplan.md`：阶段4输出，最终测试计划文档（CWD），文件名关联输入文档名
 
 **版本管理建议**：
 - 所有文件建议 git 版本管理
@@ -168,4 +168,4 @@
 - 表格字段中换行统一使用 `<br>`，禁止在表格单元格内直接换行或使用 `\n`，确保 Markdown 表格解析正确
 - 同一 Feature 下的所有 SubFeature 连续出现，不要穿插其他 Feature
 - 追加到已有 SubFeature 时，只需要在对应 `### heading` 下添加新表格行
-- 不要修改 `.tp_cache/testplan_raw.md` 中已有的其他章节内容
+- 不要修改 `.tp_cache/testplan_draft.md` 中已有的其他章节内容

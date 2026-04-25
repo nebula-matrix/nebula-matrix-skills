@@ -140,7 +140,7 @@ def cmd_build(manager, args) -> int:
                         'tp_name': tp_name,
                         'source': row.get('source', '').strip(),
                         'stimulus': row.get('stimulus', '').strip(),
-                        'checking': row.get('checking', 'by_checker').strip(),
+                        'checking': row.get('checking', '结果一致性校验（checker）').strip(),
                         'coverage_requirements': row.get('coverage_requirements', '').strip(),
                         'priority': validate_priority(row.get('priority', 'MID')),
                         'category': row.get('category', 'normal').strip(),

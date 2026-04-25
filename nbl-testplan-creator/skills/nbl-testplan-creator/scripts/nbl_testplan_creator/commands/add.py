@@ -129,7 +129,7 @@ def _add_tp(manager, path: str, kwargs: dict) -> int:
         'tp_name': tp_name,
         'source': kwargs.get('source', ''),
         'stimulus': kwargs.get('stimulus', ''),
-        'checking': kwargs.get('checking', 'by_checker'),
+        'checking': kwargs.get('checking', '结果一致性校验（checker）'),
         'coverage_requirements': kwargs.get('coverage_requirements', ''),
         'priority': 'MID',
         'category': kwargs.get('category', 'normal'),

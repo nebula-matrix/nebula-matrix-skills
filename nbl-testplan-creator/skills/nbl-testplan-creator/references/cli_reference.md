@@ -98,7 +98,7 @@ nbl-testplan add subfeature <file> <feature_id> \
 nbl-testplan add tp <file> <feature_id>.<sub_feature_id> \
   tp_name="<name>" \
   stimulus="<stimulus>" \
-  [checking=by_checker] \
+  [checking="结果一致性校验（checker）"] \
   [priority=MID] \
   [source="<source>"] \
   [category=normal]
@@ -107,7 +107,7 @@ nbl-testplan add tp <file> <feature_id>.<sub_feature_id> \
 - `path`: `feature_id.sub_feature_id`（如 `f000.s000`）
 - `tp_name`: 测试点名称
 - `stimulus`: 配置和激励
-- `checking`: `by_checker` / `by_direct_tc` / `by_assertion`（默认 `by_checker`）
+- `checking`: 检查结果正确的条件描述，非空即可。例如：一般场景填「结果一致性校验（checker）」；corner/难随机场景填「定向用例验证」；特殊边界时序填「断言监控：xxx」
 - `priority`: 优先级（默认 `MID`）
 - `source`: 来源/备注（可选）
 - `category`: 类别（默认 `normal`）

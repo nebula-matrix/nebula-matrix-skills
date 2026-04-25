@@ -87,7 +87,7 @@ def cmd_import(manager, args) -> int:
                         'tp_name': tp_name,
                         'source': row.get('source', '').strip(),
                         'stimulus': row.get('stimulus', '').strip(),
-                        'checking': validate_checking(row.get('checking', 'by_checker')),
+                        'checking': validate_checking(row.get('checking', '结果一致性校验（checker）')),
                         'coverage_requirements': row.get('coverage_requirements', '').strip(),
                         'priority': validate_priority(row.get('priority', 'MID')),
                         'category': row.get('category', 'normal').strip(),

@@ -1,15 +1,17 @@
 # Markdown First 工作流指南
 
-本文档详细说明阶段3的 Markdown 工作文件 `.tp_cache/testplan_raw.md` 的格式规范与使用规则。
+本文档详细说明阶段3的 Markdown 工作文件 `.tp_cache/testplan_draft.md` 的格式规范与使用规则。
 
 ## 工作文件结构
 
-`.tp_cache/testplan_raw.md` 是阶段3的唯一工作文件，所有章节分析结果追加到此文件中。
+`.tp_cache/testplan_draft.md` 是阶段3的唯一工作文件，所有章节分析结果追加到此文件中。
 
 ### 完整模板
 
+`# 文档标题` 应根据实际输入文档名称生成，例如 `# Orion UVN 功能规格验证测试计划`。
+
 ```markdown
-# Testplan Raw
+# {doc_name} 验证测试计划
 
 ## 队列管理
 
@@ -26,8 +28,8 @@
 
 | tp_name | source | stimulus | checking | coverage_requirements | priority | category |
 |---------|---------|----------|----------|----------------------|----------|----------|
-| 队列深度32边界 | 3.2.1 队列深度配置 - 验证queue_size_mask_pow=5时队列深度为32 | 【配置】配置queue_size_mask_pow=5 | by_checker | queue_size_mask_pow=5 | HIGH | boundary |
-| 队列深度32768边界 | 3.2.1 队列深度配置 - 验证queue_size_mask_pow=15时队列深度为32768 | 【配置】配置queue_size_mask_pow=15 | by_checker | queue_size_mask_pow=15 | HIGH | boundary |
+| 队列深度32边界 | 3.2.1 队列深度配置 - 验证queue_size_mask_pow=5时队列深度为32 | 【配置】配置queue_size_mask_pow=5 | 结果一致性校验（checker） | queue_size_mask_pow=5 | HIGH | boundary |
+| 队列深度32768边界 | 3.2.1 队列深度配置 - 验证queue_size_mask_pow=15时队列深度为32768 | 【配置】配置queue_size_mask_pow=15 | 结果一致性校验（checker） | queue_size_mask_pow=15 | HIGH | boundary |
 
 ### 队列映射模式
 
@@ -38,7 +40,7 @@
 
 | tp_name | source | stimulus | checking | coverage_requirements | priority | category |
 |---------|---------|----------|----------|----------------------|----------|----------|
-| 2K模式验证 | 3.2.3 队列映射模式 - 验证2K模式使能 | 【配置】使能2K模式 | by_checker | - | HIGH | normal |
+| 2K模式验证 | 3.2.3 队列映射模式 - 验证2K模式使能 | 【配置】使能2K模式 | 结果一致性校验（checker） | - | HIGH | normal |
 
 ## 描述符预取
 
@@ -129,9 +131,9 @@
 | 列名 | 必填 | 说明 |
 |------|------|------|
 | `tp_name` | 是 | 测试点名称，必须非空 |
-| `source` | 否 | 来源/备注，引用原始文档的章节小节标题+简要概括 |
+| `source` | 否 | 来源/备注，引用原始文档的章节小节标题+简要概括（如 `6.1.2 FIFO读写`）；**禁止**使用 `sections.json` 的内部 ID（`S001`、`S002` 等） |
 | `stimulus` | 是 | 配置和激励，多行内容换行统一使用 `<br>`，禁止在单元格内直接换行 |
-| `checking` | 是 | `by_checker` / `by_direct_tc` / `by_assertion` |
+| `checking` | 是 | 描述检查结果正确的条件。例如：一般打流/随机用例写「结果一致性校验（checker）」；corner/难随机场景写「定向用例验证」；特殊边界时序关系写「断言监控：xxx」 |
 | `priority` | 是 | `LOW` / `MID` / `HIGH`，禁止缩写 |
 | `category` | 否 | `normal` / `boundary` / `combination` / `linkage` / `exception` |
 | `coverage_requirements` | 否 | 期望填写。枚举该测试点需覆盖的具体取值/场景（如值域、边界点、组合矩阵等），作为后续 covergroup 实现的参考 |
@@ -166,7 +168,7 @@ def encode_name(name: str) -> str:
 ### build 命令
 
 ```bash
-nbl-testplan build .tp_cache/features.json .tp_cache/testplan_raw.md
+nbl-testplan build .tp_cache/features.json .tp_cache/testplan_draft.md
 ```
 
 1. 初始化（清空现有 `.tp_cache/features.json` 的 `features` 数组）

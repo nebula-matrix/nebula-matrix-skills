@@ -9,16 +9,16 @@ Agent 执行：
 1. 检测到 docx 格式，调用 nbl-docx-to-markdown 转换 → `.tp_cache/Orion_UVN_Functional_Specification_decode_work/markdown_output/Orion_UVN_Functional_Specification_decode.md`
 2. 调用 section_analyzer.py -l 1 生成 .tp_cache/sections.json（11个章节）
 3. 调用 nbl-testplan init 创建 .tp_cache/features.json
-4. 调用独立 subagent 分析文档，生成 .tp_cache/testplan_raw.md 骨架
+4. 调用独立 subagent 分析文档，生成 .tp_cache/testplan_draft.md 骨架
 5. 处理章节（各章节 `line_count` 总和约 1514 行）：
    - 主 Agent 按 Feature 将 11 章分为 3 组：
      - Group-A（队列管理/描述符预取）→ subagent 生成 `.tp_cache/partial_a.md`
      - Group-B（性能描述/功能详述）→ subagent 生成 `.tp_cache/partial_b.md`
      - Group-C（流控/初始化/错误处理/DFX/低功耗）→ subagent 生成 `.tp_cache/partial_c.md`
-   - 主 Agent 串行合并：partial_a → partial_b → partial_c → 合并到 `.tp_cache/testplan_raw.md`
+   - 主 Agent 串行合并：partial_a → partial_b → partial_c → 合并到 `.tp_cache/testplan_draft.md`
 
-   （小规模文档示例：`line_count` 总和 ≤ 500 行 → 主 Agent 直接逐章串行追加到 testplan_raw.md）
-6. 调用 nbl-testplan build 从 .tp_cache/testplan_raw.md 生成 .tp_cache/features.json
+   （小规模文档示例：`line_count` 总和 ≤ 500 行 → 主 Agent 直接逐章串行追加到 testplan_draft.md）
+6. 调用 nbl-testplan build 从 .tp_cache/testplan_draft.md 生成 .tp_cache/features.json
 7. 调用 nbl-testplan tree 验证完整结构
 8. 调用 nbl-testplan format 生成 Markdown 测试计划
 ```
@@ -29,7 +29,7 @@ Agent 执行：
 用户：查看 S002 章节的处理详情
 
 Agent 执行：
-调用 subagent 分析 S002 章节 → 追加到 .tp_cache/testplan_raw.md
+调用 subagent 分析 S002 章节 → 追加到 .tp_cache/testplan_draft.md
 
 测试点分布：
 - normal: 15个（典型配置、业务流程、数据通路）
@@ -116,7 +116,7 @@ subagent 内部流程：
 subagent 处理：
 1. 分析 S004 章节内容
 2. 发现涉及"错误检测机制"，不适合挂载到现有 Feature
-3. 在 .tp_cache/testplan_raw.md 中追加新 Feature：
+3. 在 .tp_cache/testplan_draft.md 中追加新 Feature：
 
    ```markdown
    ## 错误处理
@@ -163,5 +163,5 @@ Agent 执行：
    AI 提示: 请将跨行的单元格内容合并为一行，并用 <br> 替代换行符；
            确保每个表格行末尾以 | 结尾。
 3. 修复后重新执行：
-   nbl-testplan merge .tp_cache/testplan_raw.md .tp_cache/partial_a.md .tp_cache/partial_b.md
+   nbl-testplan merge .tp_cache/testplan_draft.md .tp_cache/partial_a.md .tp_cache/partial_b.md
 ```
