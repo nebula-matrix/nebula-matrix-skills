@@ -53,7 +53,7 @@
 | 正常功能测试 | 3.1 队列管理 - 模块支持配置最大2048个接收队列 | 【配置】具体配置<br>【激励】具体激励 | 结果一致性校验（checker） | queue_size_pow∈[5,15], queue_num∈{1,512,1024,2048} | HIGH | normal |
 | 边界值测试 | 3.2.1 队列深度 - 验证queue_size_pow最大最小值边界 | 【配置】边界值 | 结果一致性校验（checker） | queue_size_pow={5,15} | HIGH | boundary |
 | 组合场景测试 | 3.2.2 队列映射 - 队列数量与映射模式组合验证 | 【配置】多条件组合 | 结果一致性校验（checker） | 2K_map_enable x queue_num={512,1024,2048} | MID | combination |
-| 联动场景测试 | 4.3 中断处理 - 与中断配置章节联动验证 | 【配置】跨章节联动 | 结果一致性校验（checker） | interrupt_vector x queue_notify | HIGH | linkage |
+| 联动场景测试 | 4.3 中断处理 - 与中断配置章节联动验证 | 【配置】跨章节联动 | 定向用例验证：中断向量与队列notify精确时序 | interrupt_vector x queue_notify | HIGH | linkage |
 | 异常场景测试 | 5.1 错误处理 - 非法配置值检测 | 【配置】非法值 | 断言监控：非法配置时中断上报 | illegal_cfg_value, out_of_range_num | HIGH | exception |
 
 > **coverage_requirements 列强制规范**（重点！常见错误）：
@@ -110,6 +110,8 @@
 - 是否测试了配置项之间的组合？
 - 是否识别了跨章节的联动关系？
 - 是否覆盖了异常和错误处理场景？
+- 是否覆盖了性能/压力场景（如规格有性能指标）？
+- 是否覆盖了复位场景（上下电复位、warm reset、复位释放恢复）？
 - stimulus描述是否具体可执行？
 - checking方式是否明确？
 - **coverage_requirements 是否填正确？** 必须是值域枚举、边界点、组合矩阵等**具体采样点**（如`timeout∈{0,64,1023}`），绝不能填规格编号、绝不能填检查过程描述、绝不能为空或笼统表述
@@ -132,6 +134,8 @@
 - combination: {count}个
 - linkage: {count}个
 - exception: {count}个
+- performance: {count}个
+- reset: {count}个
 
 自检问题：通过/未通过
 遗漏补充：已补充/无需补充
@@ -149,20 +153,35 @@
 2. **边界覆盖**：
    - 最大值、最小值、临界值是否测试？
    - 溢出、下溢场景是否覆盖？
+   - 寄存器复位值边界、跨时钟域边界？
 
 3. **组合覆盖**：
    - 配置项之间的组合测试？
    - 并发访问、时序冲突？
+   - 多 Feature 交叉组合？
 
 4. **联动覆盖**：
    - 章节内 SubFeature 的依赖关系？
-   - 跨章节功能依赖（参考已分析章节摘要）？
+   - 跨 Feature 数据流/控制流交互？
+   - 跨模块接口交互？
+   - 端到端数据通路？
 
 5. **异常覆盖**：
    - 错误配置、非法输入？
    - 故障注入场景？
+   - 错误恢复能力？
 
-6. **质量检查**：
+6. **性能覆盖**：
+   - 吞吐量/带宽指标？
+   - 延迟指标？
+   - 极限压力场景？
+
+7. **复位覆盖**：
+   - 上电复位初始状态？
+   - 运行中复位行为？
+   - 复位释放后恢复？
+
+8. **质量检查**：
    - `tp_name` 是否为中文简述，无英文驼峰命名？
    - stimulus 描述是否可执行、是否单行过长？
    - `coverage_requirements` 是否单行过长、是否对同类条目做了合理压缩？
@@ -177,6 +196,8 @@
 | `combination_covered` | 已覆盖的组合场景 |
 | `linkage_covered` | 已覆盖的联动关系 |
 | `exception_covered` | 已覆盖的异常场景 |
+| `performance_covered` | 已覆盖的性能/压力场景 |
+| `reset_covered` | 已覆盖的复位场景 |
 | `cross_section_deps` | 跨章节依赖（含 `depends_on` 和 `type`） |
 | `missing_items` | 遗漏项列表（空列表表示无遗漏） |
 | `quality_check` | 质量检查结论 |

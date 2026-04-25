@@ -135,7 +135,7 @@
 | `stimulus` | 是 | 配置和激励，多行内容换行统一使用 `<br>`，禁止在单元格内直接换行 |
 | `checking` | 是 | 描述检查结果正确的条件。例如：一般打流/随机用例写「结果一致性校验（checker）」；corner/难随机场景写「定向用例验证」；特殊边界时序关系写「断言监控：xxx」 |
 | `priority` | 是 | `LOW` / `MID` / `HIGH`，禁止缩写 |
-| `category` | 否 | `normal` / `boundary` / `combination` / `linkage` / `exception` |
+| `category` | 否 | `normal` / `boundary` / `combination` / `linkage` / `exception` / `performance` / `reset` |
 | `coverage_requirements` | 否 | 期望填写。枚举该测试点需覆盖的具体取值/场景（如值域、边界点、组合矩阵等），作为后续 covergroup 实现的参考 |
 
 ## 路径编码规则
