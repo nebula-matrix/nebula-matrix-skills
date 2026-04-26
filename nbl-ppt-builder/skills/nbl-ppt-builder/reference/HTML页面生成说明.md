@@ -218,23 +218,26 @@ ppt_{主题}/
 
 ### ⚠️ 必须执行
 
-**生成 PPT 页面后，必须先运行检测脚本，确认无问题后再生成 PPT 文件。**
+**生成所有章节 HTML 页面后，执行批量检测，确认无问题后再生成 PPT 文件。**
 
 ### 检测流程
 
-每页生成后按顺序执行两步检测，均通过才算完成：**Playwright（内容溢出）→ PPTX 预检（语法兼容）**。任一失败修复后重试。
+按顺序执行两步批量检测，均通过才算完成：**Playwright（内容溢出）→ PPTX 预检（语法兼容）**。任一失败修复后重试。
 
 ### 步骤1：Playwright 内容溢出检测
 
-**在生成 HTML 页面后立即进行单页检测**：
+**批量检测目录下所有页面**：
 ```bash
-cd  path/to/scripts && uv run validate_with_playwright.py /path/to/page.html
+cd  path/to/scripts && uv run validate_with_playwright.py [工作目录] -o [报告路径]
 ```
 
 **示例**：
 ```bash
-# 检测特定页面
-cd  path/to/scripts && uv run validate_with_playwright.py /path/to/ppt_主题/03_背景介绍.html  -o /path/to/ppt/ppt_主题/tmp/03_背景介绍_validation_report.json
+# 检测整个工作目录
+cd  path/to/scripts && uv run validate_with_playwright.py /path/to/ppt_主题/ -o /path/to/ppt_主题/tmp/validation_report.json
+
+# 检测多个指定页面（避免干扰其他 agent 正在处理的目录）
+cd  path/to/scripts && uv run validate_with_playwright.py /path/to/ppt_主题/03_背景介绍.html /path/to/ppt_主题/04_问题分析.html /path/to/ppt_主题/05_解决方案.html
 ```
 
 **注意**：
@@ -243,6 +246,7 @@ cd  path/to/scripts && uv run validate_with_playwright.py /path/to/ppt_主题/03
 - 路径必须是绝对路径或相对于 SKILL 目录的完整路径
 - `-o` 参数可选，用于指定输出报告路径
 - 如果输出路径不存在，应该创建路径
+- **多 agent 并行场景**：为避免干扰其他 agent 正在处理的 PPT 目录，可指定多个 HTML 文件而非目录进行检测
 
 **返回值**：
 | 返回值 | 状态 | 处理方式 |
@@ -278,13 +282,19 @@ cd  path/to/scripts && uv run validate_with_playwright.py /path/to/ppt_主题/03
 
 ### 步骤2：PPTX 预检测
 
-对每一页生成的 HTML 文件进行快速检查（每页生成后必须要检测语法是否符合要求）：
+对整个工作目录或指定页面进行语法兼容性检查：
 
 ```bash
-cd  path/to/scripts && node pptx/generate_pptx.js --check /path/to/ppt_{主题}/页码_标题.html
+# 检测整个工作目录
+cd  path/to/scripts && node pptx/generate_pptx.js --check /path/to/ppt_{主题}
+
+# 检测多个指定页面（避免干扰其他 agent 正在处理的目录）
+cd  path/to/scripts && node pptx/generate_pptx.js --check /path/to/ppt_{主题}/03_背景介绍.html /path/to/ppt_{主题}/04_问题分析.html
 ```
 
 **注意**：命令应在 nbl-ppt-builder SKILL 目录下执行。批量汇总检测由最终检查子代理执行，详细说明请参考 SKILL.md 的"最终检查与整合"章节。
+
+**多 agent 并行场景**：当多个 agent 同时处理不同 PPT 目录时，使用 `--check` 指定多个 HTML 文件而非目录，可避免干扰其他 agent 的工作目录。
 
 **检测内容**：
 | 检查项 | 说明 | 修复方式 |

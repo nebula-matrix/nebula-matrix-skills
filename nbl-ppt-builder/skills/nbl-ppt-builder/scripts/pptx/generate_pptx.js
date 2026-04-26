@@ -28,13 +28,13 @@ const FILE_PATTERN = /^(\d{2,3})_.*\.html$/;
  * Parse command line arguments
  */
 function parseArgs(args) {
-  const result = { checkMode: false, workDir: null, singleFile: null, outputFile: null };
+  const result = { checkMode: false, workDir: null, htmlFiles: [], outputFile: null };
 
   for (const arg of args) {
     if (arg === '--check' || arg === '--dry-run') {
       result.checkMode = true;
     } else if (arg.endsWith('.html')) {
-      result.singleFile = arg;
+      result.htmlFiles.push(arg);
     } else if (!result.workDir) {
       result.workDir = arg;
     } else if (!result.outputFile) {
@@ -69,34 +69,54 @@ function collectSlides(workDir) {
 }
 
 /**
- * Check a single HTML file
+ * Check multiple HTML files
  */
-async function checkSingleFile(htmlFile) {
-  console.log(`\n📊 NBL PPT Builder - 单文件检测模式\n`);
-  console.log(`📁 检查文件: ${htmlFile}\n`);
+async function checkFiles(htmlFiles) {
+  const fileCount = htmlFiles.length;
+  console.log(`\n📊 NBL PPT Builder - ${fileCount === 1 ? '单文件' : '多文件'}检测模式\n`);
 
-  // Validate file exists
-  if (!fs.existsSync(htmlFile)) {
-    throw new Error(`File not found: ${htmlFile}`);
+  // Validate all files exist
+  for (const htmlFile of htmlFiles) {
+    if (!fs.existsSync(htmlFile)) {
+      throw new Error(`File not found: ${htmlFile}`);
+    }
   }
 
   // Create presentation for validation
   const pptx = new pptxgen();
   pptx.layout = 'LAYOUT_16x9';
   pptx.author = 'NBL PPT Builder';
-  pptx.title = path.basename(path.dirname(htmlFile));
+  pptx.title = 'NBL PPT Validation';
 
-  console.log(`🔍 Checking for validation errors...\n`);
+  console.log(`🔍 Checking ${fileCount} file(s) for validation errors...\n`);
 
-  try {
-    const result = await html2pptx(htmlFile, pptx, { checkMode: true });
-    console.log(`✅ 文件检测通过，可以安全转换\n`);
-    console.log(`💡 提示: 该文件符合 PPT 生成要求`);
-  } catch (error) {
-    console.log(`❌\n`);
-    console.log(`📋 检测结果:`);
-    console.log(`   ❌ 发现以下问题:\n`);
-    console.log(`   ${error.message}\n`);
+  let checkErrors = [];
+
+  for (const htmlFile of htmlFiles) {
+    const fileName = path.basename(htmlFile);
+    process.stdout.write(`   📄 Checking ${fileName}... `);
+
+    try {
+      await html2pptx(htmlFile, pptx, { checkMode: true });
+      console.log('✅');
+    } catch (error) {
+      console.log('❌');
+      checkErrors.push({ slide: fileName, error: error.message });
+    }
+  }
+
+  console.log(`\n📋 检测结果:`);
+  if (checkErrors.length === 0) {
+    console.log(`   ✅ 所有 ${fileCount} 个页面检测通过，可以安全转换`);
+    if (fileCount === 1) {
+      console.log(`\n💡 提示: 该文件符合 PPT 生成要求`);
+    }
+  } else {
+    console.log(`   ❌ 发现 ${checkErrors.length} 个问题:\n`);
+    checkErrors.forEach((e, i) => {
+      console.log(`   ${i + 1}. ${e.slide}`);
+      console.log(`      ${e.error}\n`);
+    });
     console.log(`💡 提示: 请先修复上述问题后再生成 PPT`);
     process.exit(1);
   }
@@ -199,8 +219,8 @@ Usage:
   检测模式（推荐先执行）:
     node generate_pptx.js --check <work_dir>
 
-  检测单个页面（生成后立即检查）:
-    node generate_pptx.js <page_file.html>
+  检测多个指定页面:
+    node generate_pptx.js --check <page1.html> [page2.html] [page3.html]
 
   生成模式（检测通过后执行）:
     node generate_pptx.js <work_dir> [output_file]
@@ -214,22 +234,25 @@ Examples:
      node generate_pptx.js --check /path/to/ppt_季度总结_20240131
 
   2. 检测单个页面:
-     node generate_pptx.js /path/to/ppt_季度总结_20240131/03_背景介绍.html
+     node generate_pptx.js --check /path/to/ppt_季度总结_20240131/03_背景介绍.html
 
-  3. 生成 PPT 文件:
+  3. 检测多个指定页面:
+     node generate_pptx.js --check 03_背景.html 04_问题.html 05_方案.html
+
+  4. 生成 PPT 文件:
      node generate_pptx.js /path/to/ppt_季度总结_20240131
 
-  4. 生成并指定输出文件名:
+  5. 生成并指定输出文件名:
      node generate_pptx.js /path/to/ppt_季度总结_20240131 quarterly_report.pptx
   `);
   process.exit(1);
 }
 
-const { checkMode, workDir, singleFile, outputFile } = parseArgs(args);
+const { checkMode, workDir, htmlFiles, outputFile } = parseArgs(args);
 
-// Single file check mode
-if (singleFile && !workDir) {
-  checkSingleFile(singleFile)
+// File check mode (single or multiple)
+if (htmlFiles.length > 0 && !workDir) {
+  checkFiles(htmlFiles)
     .then(() => process.exit(0))
     .catch(error => {
       console.error(`\n❌ Error: ${error.message}\n`);

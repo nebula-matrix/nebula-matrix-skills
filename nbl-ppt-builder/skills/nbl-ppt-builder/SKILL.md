@@ -139,7 +139,9 @@ cd scripts/pptx && npm install
 
 3. **批量检测与统一修复**
    a. 执行批量 Playwright 检测：`uv run validate_with_playwright.py [工作目录] -o [报告路径]`
+      - **多 agent 并行时**：改为指定多个 HTML 文件，避免干扰其他 agent 正在处理的目录
    b. 执行批量 PPTX 预检：`node pptx/generate_pptx.js --check [工作目录]`
+      - **多 agent 并行时**：改为 `node pptx/generate_pptx.js --check page1.html page2.html ...`
    c. 汇总所有问题页面，按问题类型分类（如字体过大、内容溢出、卡片重叠等）
    d. 统一修复同类问题（如全局缩小正文字体、统一调整容器高度）
    e. 修复后重新执行批量检测，重复直到全部通过
@@ -201,11 +203,16 @@ cd scripts/pptx && npm install
    - 卡片内部垂直滚动条（内容超出卡片高度）
    - 卡片内部水平滚动条（内容超出卡片宽度）
 
-5. **批量 PPTX 预检**：调用 `generate_pptx.js --check` 对整个工作目录进行综合检测
+5. **批量 PPTX 预检**：调用 `generate_pptx.js --check` 进行综合检测
 
-   **批量预检命令**：
+   **批量预检命令**（检测整个工作目录）：
    ```bash
    cd  path/to/scripts && node pptx/generate_pptx.js --check /path/to/ppt_{主题}
+   ```
+
+   **多 agent 并行时**（指定多个文件，避免干扰其他目录）：
+   ```bash
+   cd  path/to/scripts && node pptx/generate_pptx.js --check /path/to/ppt_{主题}/03_*.html /path/to/ppt_{主题}/04_*.html
    ```
 
    **检测内容**：
