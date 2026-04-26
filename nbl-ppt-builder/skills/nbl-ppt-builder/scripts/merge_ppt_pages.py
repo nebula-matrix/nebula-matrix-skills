@@ -276,6 +276,10 @@ def merge_html_files(html_files, output_file, renumber=False):
             overflow: hidden;
         }
         @media print {
+            html, body {
+                height: auto;
+                overflow-y: visible;
+            }
             body {
                 background: white;
                 padding-bottom: 0;
@@ -283,6 +287,10 @@ def merge_html_files(html_files, output_file, renumber=False):
             .page {
                 margin: 0;
                 box-shadow: none;
+                page-break-inside: avoid;
+            }
+            .page:last-child {
+                page-break-after: auto;
             }
         }
     </style>
