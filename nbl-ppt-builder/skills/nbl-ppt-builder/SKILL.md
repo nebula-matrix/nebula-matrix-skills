@@ -138,10 +138,10 @@ cd scripts/pptx && npm install
    - 此阶段只做内容填充和保存，**不执行检测**
 
 3. **批量检测与统一修复**
-   a. 执行批量 Playwright 检测：`uv run validate_with_playwright.py [工作目录] -o [报告路径]`
-      - **多 agent 并行时**：改为指定多个 HTML 文件，避免干扰其他 agent 正在处理的目录
-   b. 执行批量 PPTX 预检：`node pptx/generate_pptx.js --check [工作目录]`
-      - **多 agent 并行时**：改为 `node pptx/generate_pptx.js --check page1.html page2.html ...`
+   a. 执行批量 Playwright 检测（**必须指定多个 HTML 文件，禁止检测目录**，避免干扰其他 agent）：
+      `uv run validate_with_playwright.py [工作目录]/页码_标题.html [工作目录]/页码_标题.html ...`
+   b. 执行批量 PPTX 预检（**必须指定多个 HTML 文件，禁止检测目录**）：
+      `node pptx/generate_pptx.js --check [工作目录]/页码_标题.html [工作目录]/页码_标题.html ...`
    c. 汇总所有问题页面，按问题类型分类（如字体过大、内容溢出、卡片重叠等）
    d. 统一修复同类问题（如全局缩小正文字体、统一调整容器高度）
    e. 修复后重新执行批量检测，重复直到全部通过
