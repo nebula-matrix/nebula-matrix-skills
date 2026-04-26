@@ -37,6 +37,16 @@ async function generatePdf(htmlFilePath, pdfOutputPath) {
       }
     };
 
+    // 检测页面数量
+    const pageCount = await page.evaluate(() => document.querySelectorAll('.page').length);
+    console.log(`📄 检测到 ${pageCount} 个幻灯片页面`);
+
+    if (pageCount === 0) {
+      throw new Error('未检测到任何幻灯片页面，请检查 HTML 文件是否正确');
+    } else if (pageCount === 1) {
+      console.log('⚠️ 警告：只检测到 1 个页面，如果预期有多个页面，请确认传入的是 merged_presentation.html（合并后的文件），而非单个页面文件');
+    }
+
     console.log(`📐 使用尺寸: 960px × 540px (16:9 格式)`);
     console.log('💾 正在生成 PDF...');
 
