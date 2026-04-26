@@ -292,11 +292,7 @@ cd  path/to/scripts && node pptx/generate_pptx.js /path/to/ppt_主题  /path/to/
 
 #### 生成 PDF
 
-合并后的 HTML 文件可通过以下两种方式生成 PDF：
-
-**方式一：使用自动化脚本（推荐）**
-
-使用 `scripts/pptx/generate_pdf.js` 脚本，基于 Playwright 自动导出 PDF：
+使用 `scripts/pptx/generate_pdf.js` 脚本，基于 Playwright 将合并后的 HTML 自动导出为 PDF：
 
 ```bash
 cd path/to/scripts && node pptx/generate_pdf.js /path/to/ppt_主题/merged_presentation.html [/path/to/output.pdf]
@@ -312,14 +308,6 @@ cd path/to/scripts && node pptx/generate_pdf.js /path/to/ppt_主题/merged_prese
 - 零边距输出，适合打印和分享
 
 **前提条件**：Playwright Chromium 已安装（`uv run playwright install chromium`）
-
-**方式二：浏览器手动打印**
-
-在浏览器中打开合并后的 HTML 文件，使用打印功能（Ctrl+P / Cmd+P）：
-- 目标打印机选择「另存为 PDF」
-- 纸张尺寸选择「自定义」960px × 540px
-- 边距设为「无」
-- 勾选「背景图形」
 
 ## 文档引用
 
