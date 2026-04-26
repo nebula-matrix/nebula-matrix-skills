@@ -42,8 +42,9 @@ cd scripts/pptx && npm install
 
 - 📖 完整使用说明请参考 `scripts/README.md`
 - 📁 `validate_with_playwright.py` - 批量检测 PPT 内容溢出、卡片重叠、内部滚动条等问题
-- 📁 `merge_ppt_pages.py` - 合并多个 HTML 页面
+- 📁 `merge_ppt_pages.py` - 合并多个 HTML 页面，支持插页排序和 `--renumber` 重排页码
 - 📁 `pptx/generate_pptx.js` - 生成 PowerPoint (.pptx) 文件，📖 详细说明参考 `pptx/README.md`
+- 📁 `pptx/generate_pdf.js` - 将合并后的 HTML 导出为 PDF 文件
 
 ## PPT 构建流程
 
@@ -291,7 +292,34 @@ cd  path/to/scripts && node pptx/generate_pptx.js /path/to/ppt_主题  /path/to/
 
 #### 生成 PDF
 
-在合并后的 HTML 文件中，可通过浏览器打印功能导出为 PDF。
+合并后的 HTML 文件可通过以下两种方式生成 PDF：
+
+**方式一：使用自动化脚本（推荐）**
+
+使用 `scripts/pptx/generate_pdf.js` 脚本，基于 Playwright 自动导出 PDF：
+
+```bash
+cd path/to/scripts && node pptx/generate_pdf.js /path/to/ppt_主题/merged_presentation.html [/path/to/output.pdf]
+```
+
+**参数说明**：
+- `merged_presentation.html`（必需）：合并后的 HTML 文件路径
+- `output.pdf`（可选）：输出 PDF 文件路径，默认保存在 merged_presentation.html 同级目录下
+
+**脚本特点**：
+- 自动按 16:9 比例（960px × 540px）分页
+- 保留背景色和图形
+- 零边距输出，适合打印和分享
+
+**前提条件**：Playwright Chromium 已安装（`uv run playwright install chromium`）
+
+**方式二：浏览器手动打印**
+
+在浏览器中打开合并后的 HTML 文件，使用打印功能（Ctrl+P / Cmd+P）：
+- 目标打印机选择「另存为 PDF」
+- 纸张尺寸选择「自定义」960px × 540px
+- 边距设为「无」
+- 勾选「背景图形」
 
 ## 文档引用
 

@@ -4,6 +4,11 @@ const path = require('path');
 async function generatePdf(htmlFilePath, pdfOutputPath) {
   console.log('📊 NBL PPT Builder - PDF 生成模式\n');
 
+  // 检查 HTML 文件是否存在
+  if (!fs.existsSync(htmlFilePath)) {
+    throw new Error(`HTML 文件不存在: ${htmlFilePath}`);
+  }
+
   const browser = await chromium.launch({
     headless: true,
     args: ['--no-sandbox', '--disable-setuid-sandbox']
@@ -20,7 +25,7 @@ async function generatePdf(htmlFilePath, pdfOutputPath) {
       path: pdfOutputPath,
       width: '960px',    // 幻灯片宽度
       height: '540px',   // 幻灯片高度 (16:9)
-      preferCSSPageSize: true,
+      preferCSSPageSize: false,  // 使用下方指定的 width/height，不优先采用 CSS @page 规则
       printBackground: true,
       scale: 1,
       margin: {
@@ -49,9 +54,25 @@ async function generatePdf(htmlFilePath, pdfOutputPath) {
 // 命令行参数
 const args = process.argv.slice(2);
 
-if (args.length < 1) {
-  console.error('用法: node generate_pdf.js <HTML文件路径> [PDF输出路径]');
-  process.exit(1);
+if (args.length < 1 || args.includes('--help') || args.includes('-h')) {
+  console.log(`
+NBL PPT Builder - Generate PDF from merged HTML
+
+用法:
+  node generate_pdf.js <merged_html文件路径> [PDF输出路径]
+
+参数:
+  <merged_html>    合并后的 HTML 文件路径（由 merge_ppt_pages.py 生成）
+  [PDF输出路径]     可选，默认保存到 merged_html 同级目录下的 presentation.pdf
+
+示例:
+  node generate_pdf.js /path/to/ppt_主题/merged_presentation.html
+  node generate_pdf.js /path/to/ppt_主题/merged_presentation.html /path/to/output.pdf
+
+注意:
+  必须已安装 Playwright Chromium（cd scripts && uv run playwright install chromium）
+`);
+  process.exit(args.length < 1 ? 1 : 0);
 }
 
 const htmlFilePath = path.resolve(args[0]);
