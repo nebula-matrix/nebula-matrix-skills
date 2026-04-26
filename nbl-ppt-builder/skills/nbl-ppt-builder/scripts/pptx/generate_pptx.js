@@ -105,19 +105,22 @@ async function checkFiles(htmlFiles) {
     }
   }
 
-  console.log(`\n📋 检测结果:`);
+  // 输出汇总报告
+  const passedCount = fileCount - checkErrors.length;
+  console.log(`\n📊 检测汇总报告`);
+  console.log(`  检测文件总数: ${fileCount}`);
+  console.log(`  ✅ 通过: ${passedCount}`);
+  console.log(`  ❌ 失败: ${checkErrors.length}`);
+
   if (checkErrors.length === 0) {
-    console.log(`   ✅ 所有 ${fileCount} 个页面检测通过，可以安全转换`);
-    if (fileCount === 1) {
-      console.log(`\n💡 提示: 该文件符合 PPT 生成要求`);
-    }
+    console.log(`\n💡 提示: 所有文件检测通过，可以安全转换`);
   } else {
-    console.log(`   ❌ 发现 ${checkErrors.length} 个问题:\n`);
+    console.log(`\n📋 问题详情:`);
     checkErrors.forEach((e, i) => {
-      console.log(`   ${i + 1}. ${e.slide}`);
-      console.log(`      ${e.error}\n`);
+      console.log(`\n  ${i + 1}. ${e.slide}`);
+      console.log(`     ${e.error}`);
     });
-    console.log(`💡 提示: 请先修复上述问题后再生成 PPT`);
+    console.log(`\n💡 提示: 请先修复上述问题后再生成 PPT`);
     process.exit(1);
   }
 }
@@ -184,18 +187,23 @@ async function generatePPTX(workDir, outputFile = 'presentation.pptx', checkMode
   }
 
   if (checkMode) {
-    console.log(`\n📋 检测结果:`);
+    // 输出汇总报告
+    const passedCount = slides.length - checkErrors.length;
+    console.log(`\n📊 检测汇总报告`);
+    console.log(`  检测文件总数: ${slides.length}`);
+    console.log(`  ✅ 通过: ${passedCount}`);
+    console.log(`  ❌ 失败: ${checkErrors.length}`);
+
     if (checkErrors.length === 0) {
-      console.log(`   ✅ 所有 ${slides.length} 个页面检测通过，可以安全生成 PPT`);
-      console.log(`\n💡 提示: 使用以下命令生成 PPT 文件:`);
+      console.log(`\n💡 提示: 所有文件检测通过，使用以下命令生成 PPT:`);
       console.log(`   node generate_pptx.js "${workDir}" "${outputFile}"`);
     } else {
-      console.log(`   ❌ 发现 ${checkErrors.length} 个问题:\n`);
+      console.log(`\n📋 问题详情:`);
       checkErrors.forEach((e, i) => {
-        console.log(`   ${i + 1}. ${e.slide}`);
-        console.log(`      ${e.error}\n`);
+        console.log(`\n  ${i + 1}. ${e.slide}`);
+        console.log(`     ${e.error}`);
       });
-      console.log(`💡 提示: 请先修复上述问题后再生成 PPT`);
+      console.log(`\n💡 提示: 请先修复上述问题后再生成 PPT`);
       process.exit(1);
     }
   } else {
