@@ -22,7 +22,7 @@ const html2pptx = require('./html2pptx');
 // Constants
 const SLIDE_WIDTH_IN = 10;
 const SLIDE_HEIGHT_IN = 5.625; // 16:9 aspect ratio
-const FILE_PATTERN = /^(\d{2,3})_.*\.html$/;
+const FILE_PATTERN = /^(\d{2,3})([a-z]?)_.*\.html$/;
 
 /**
  * Parse command line arguments
@@ -57,13 +57,19 @@ function collectSlides(workDir) {
     if (!match) continue;
 
     const pageNum = parseInt(match[1], 10);
+    const suffix = match[2] || '';  // 字母后缀如 "a", "b"，正常页为空字符串
     const filePath = path.join(workDir, file);
 
-    slides.push({ pageNum, file, path: filePath });
+    slides.push({ pageNum, suffix, file, path: filePath });
   }
 
-  // Sort by page number
-  slides.sort((a, b) => a.pageNum - b.pageNum);
+  // Sort by page number, then by suffix: 03 < 03a < 03b < 04
+  slides.sort((a, b) => {
+    if (a.pageNum !== b.pageNum) {
+      return a.pageNum - b.pageNum;
+    }
+    return a.suffix.localeCompare(b.suffix);
+  });
 
   return slides;
 }

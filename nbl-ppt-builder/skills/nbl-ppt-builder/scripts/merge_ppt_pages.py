@@ -10,31 +10,51 @@ import argparse
 from pathlib import Path
 
 
+def parse_page_key(filename):
+    """
+    解析文件名中的页码排序键
+
+    支持正常页码 (01, 02...) 和插页 (03a, 03b...)
+
+    Args:
+        filename: 文件名
+
+    Returns:
+        tuple: (页码数字, 字母后缀) 或 None（不匹配时）
+    """
+    # 匹配格式: 02_描述.html, 02a_补充.html, 02b_案例.html
+    pattern = re.compile(r"^(\d{2,3})([a-z]?)[._-].*\.html$")
+    match = pattern.match(filename)
+    if match:
+        num = int(match.group(1))
+        suffix = match.group(2)  # 空字符串或 "a", "b" 等
+        return (num, suffix)
+    return None
+
+
 def find_html_files(work_dir):
     """
     查找工作目录中所有按页码命名的 HTML 文件
+
+    支持插页格式: 03a_补充.html, 03b_案例.html
 
     Args:
         work_dir: 工作目录路径
 
     Returns:
-        list: 排序后的 (页码, 文件路径) 元组列表
+        list: 排序后的 (页码键, 文件路径) 元组列表
+                 页码键格式: (数字, 字母后缀) 如 (3, ""), (3, "a"), (3, "b")
     """
     html_files = []
 
-    # 匹配格式: 02_描述.html, 02-描述.html, 02.描述.html 或 02.html
-    pattern = re.compile(r"^(\d{2,3})[._-].*\.html$|^(\d{2,3})\.html$")
-
     for file in os.listdir(work_dir):
         if file.endswith(".html"):
-            match = pattern.match(file)
-            if match:
-                # 提取页码
-                page_num = int(match.group(1) or match.group(2))
+            page_key = parse_page_key(file)
+            if page_key:
                 file_path = os.path.join(work_dir, file)
-                html_files.append((page_num, file_path))
+                html_files.append((page_key, file_path))
 
-    # 按页码排序
+    # 按 (数字, 字母后缀) 排序: (3, "") < (3, "a") < (3, "b") < (4, "")
     html_files.sort(key=lambda x: x[0])
     return html_files
 
@@ -151,13 +171,45 @@ def deduplicate_scripts_and_styles(head_contents, body_contents):
     return merged_head_contents, body_contents
 
 
-def merge_html_files(html_files, output_file):
+def renumber_page_in_body(body_content, new_page_num):
+    """
+    将 body 内容中的页码数字替换为新页码
+
+    策略：查找所有 <span>数字</span> 匹配，取最后一个合理范围(1-100)的作为页码替换
+
+    Args:
+        body_content: body 标签内的 HTML 内容
+        new_page_num: 新页码数字
+
+    Returns:
+        str: 替换页码后的 body 内容
+    """
+    pattern = re.compile(r"(<span[^>]*>)\s*(\d+)\s*(</span>)")
+    matches = list(pattern.finditer(body_content))
+
+    # 筛选合理页码范围(1-100)，取最后一个（页码通常在页面底部）
+    valid_matches = [m for m in matches if 1 <= int(m.group(2)) <= 100]
+    if valid_matches:
+        last_match = valid_matches[-1]
+        start, end = last_match.span()
+        return (
+            body_content[:start]
+            + last_match.group(1) + str(new_page_num) + last_match.group(3)
+            + body_content[end:]
+        )
+
+    return body_content
+
+
+def merge_html_files(html_files, output_file, renumber=False):
     """
     合并多个 HTML 文件
 
     Args:
-        html_files: 排序后的 (页码, 文件路径) 元组列表
+        html_files: 排序后的 (页码键, 文件路径) 元组列表
+                     页码键格式: (数字, 字母后缀) 如 (3, ""), (3, "a")
         output_file: 输出文件路径
+        renumber: 是否重排页码（按合并后的顺序分配连续页码）
     """
     if not html_files:
         print("错误：未找到任何 HTML 文件")
@@ -169,15 +221,17 @@ def merge_html_files(html_files, output_file):
     head_contents = []
     body_contents = []
 
-    for page_num, file_path in html_files:
-        print(f"读取页面 {page_num}: {os.path.basename(file_path)}")
+    for page_key, file_path in html_files:
+        num, suffix = page_key
+        display_key = f"{num:02d}{suffix}" if suffix else f"{num:02d}"
+        print(f"读取页面 {display_key}: {os.path.basename(file_path)}")
 
         with open(file_path, "r", encoding="utf-8") as f:
             content = f.read()
 
         head, body = extract_head_content(content)
         head_contents.append(head)
-        body_contents.append((page_num, body))
+        body_contents.append((page_key, body))
 
     # 去重样式和脚本
     print("去重样式和脚本...")
@@ -237,9 +291,17 @@ def merge_html_files(html_files, output_file):
     """
 
     # 合并所有 body 内容，每页用 div.page 包裹
-    for i, (page_num, body) in enumerate(body_contents):
-        print(f"合并页面 {page_num}")
-        merged_html += f"\n    <!-- Page {page_num} -->\n"
+    for i, (page_key, body) in enumerate(body_contents):
+        num, suffix = page_key
+        display_key = f"{num:02d}{suffix}" if suffix else f"{num:02d}"
+        new_page_num = i + 1  # 合并后的连续页码（1-based）
+
+        # 如果启用重排，替换 body 中的页码数字
+        if renumber:
+            body = renumber_page_in_body(body, new_page_num)
+
+        print(f"合并页面 {display_key} → 新页码 {new_page_num}")
+        merged_html += f"\n    <!-- Page {new_page_num} (原 {display_key}) -->\n"
         merged_html += f'    <div class="page">\n'
         merged_html += body
         merged_html += "\n    </div>\n"
@@ -264,9 +326,14 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 示例:
+  # 普通合并（保持原始页码）
   python merge_ppt_pages.py -d ppt_季度总结_20240131
-  python merge_ppt_pages.py -d ./ppt_产品介绍_20240131 -o merged_presentation.html
-  python merge_ppt_pages.py -d ppt_季度总结 -o merged_presentation.html --verbose
+
+  # 重排页码后合并（推荐用于有拆分插页的PPT）
+  python merge_ppt_pages.py -d ppt_季度总结_20240131 --renumber
+
+  # 指定输出文件名
+  python merge_ppt_pages.py -d ./ppt_产品介绍 -o merged_presentation.html --renumber
         """,
     )
 
@@ -279,6 +346,12 @@ def main():
         "--output",
         default="merged_presentation.html",
         help="输出文件名（默认: merged_presentation.html）",
+    )
+
+    parser.add_argument(
+        "--renumber",
+        action="store_true",
+        help="重排页码：按文件排序后的顺序分配连续页码（1, 2, 3...），并替换每页内部显示的页码数字",
     )
 
     parser.add_argument("-v", "--verbose", action="store_true", help="显示详细信息")
@@ -300,15 +373,17 @@ def main():
 
     if args.verbose:
         print("\n找到以下 HTML 文件:")
-        for page_num, file_path in html_files:
-            print(f"  页码 {page_num}: {os.path.basename(file_path)}")
+        for page_key, file_path in html_files:
+            num, suffix = page_key
+            display_key = f"{num:02d}{suffix}" if suffix else f"{num:02d}"
+            print(f"  页码 {display_key}: {os.path.basename(file_path)}")
         print()
 
     # 构建输出文件路径
     output_path = os.path.join(args.dir, args.output)
 
     # 合并文件
-    success = merge_html_files(html_files, output_path)
+    success = merge_html_files(html_files, output_path, renumber=args.renumber)
 
     if success:
         print(f"\n提示：在浏览器中打开以下文件查看完整 PPT:")
