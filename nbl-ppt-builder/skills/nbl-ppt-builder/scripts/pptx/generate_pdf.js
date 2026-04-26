@@ -21,6 +21,14 @@ async function generatePdf(htmlFilePath, pdfOutputPath) {
     console.log(`📄 正在加载 HTML 文件: ${htmlFilePath}`);
     await page.goto(`file://${htmlFilePath}`, { waitUntil: 'networkidle0', timeout: 60000 });
 
+    // 修复：确保 html/body 高度随内容展开，否则 Chromium 打印引擎会将内容压缩到一页
+    await page.addStyleTag({
+      content: `
+        html { height: auto !important; min-height: auto !important; }
+        body { height: auto !important; min-height: auto !important; }
+      `
+    });
+
     // 配置 PDF 选项 - 使用自定义尺寸匹配 16:9 幻灯片格式
     const pdfOptions = {
       path: pdfOutputPath,
