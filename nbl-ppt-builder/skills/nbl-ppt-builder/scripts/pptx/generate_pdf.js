@@ -1,5 +1,6 @@
 const { chromium } = require('playwright');
 const path = require('path');
+const fs = require('fs');
 
 async function generatePdf(htmlFilePath, pdfOutputPath) {
   console.log('📊 NBL PPT Builder - PDF 生成模式\n');
