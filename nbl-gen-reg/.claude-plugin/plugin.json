@@ -1,0 +1,6 @@
+{
+  "name": "nbl-gen-reg",
+  "version": "1.0.0",
+  "description": "NBL IC寄存器生成工具插件。从Excel寄存器手册提取数据，生成reg_slv Verilog、UVM RAL模型、寄存器配置表，支持数据校验和多维度筛选",
+  "skills": "./skills"
+}

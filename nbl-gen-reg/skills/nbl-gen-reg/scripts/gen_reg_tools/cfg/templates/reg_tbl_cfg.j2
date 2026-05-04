@@ -1,0 +1,147 @@
+class {{ bt_name }}_reg_tbl_cfg extends uvm_object;
+    rand bit                m_cfg_set_default_value_en;
+    // 逐个声明寄存器以及寄存器所属的field
+    {% for reg in results %}
+        {% set regname_t = "{}_t".format(reg.name) %}
+        {% set m_regname = "m_{}".format(reg.name) %}
+        {% set m_regname_dp = "m_{}[{}]".format(reg.name, reg.depth)  %}
+        {% if reg.depth > 1 %}
+            {% set max_reg_field_len = max_reg_name_len + max_field_name_len + 5 %}
+    rand {{ regname_t | lalign(mix_len+max_field_dw_len) }}        {{ m_regname_dp | lalign(max_reg_field_len) }};
+            {% for field in reg.subpart %}
+                {% set align_field_bits = field.bits | lalign(max_field_dw_len) %}
+                {% set field_bits = "[{}-1:0]".format(align_field_bits) %}
+                {% set m_reg_field_name_dp = "m_{}_{}[{}]".format(reg.name, field.name, reg.depth)  %}
+                {% if field.bits > 1 %}
+    rand bit {{ field_bits | lalign(mix_len)}}        {{ m_reg_field_name_dp | lalign(max_reg_field_len) }};
+                {% else %}
+    rand bit {{ "" | lalign(mix_len)}}        {{ m_reg_field_name_dp | lalign(max_reg_field_len) }};
+                {% endif %}
+            {% endfor %}
+        {% else %}
+            {% set max_reg_field_len = max_reg_name_len + max_field_name_len + 3 %}
+    rand {{ regname_t | lalign(mix_len+max_field_dw_len) }}        {{ m_regname | lalign(max_reg_field_len) }};
+            {% for field in reg.subpart %}
+                {% set align_field_bits = field.bits | lalign(max_field_dw_len) %}
+                {% set field_bits = "[{}-1:0]".format(align_field_bits) %}
+                {% set m_reg_field_name = "m_{}_{}".format(reg.name, field.name)  %}
+                    {% if field.bits > 1 %}
+    rand bit {{ field_bits | lalign(mix_len)}}        {{ m_reg_field_name | lalign(max_reg_field_len) }};
+                    {% else %}
+    rand bit {{ "" | lalign(mix_len)}}        {{ m_reg_field_name | lalign(max_reg_field_len) }};
+                    {% endif %}
+            {% endfor %}
+        {% endif %}
+
+    {% endfor %}
+    constraint demo_c {
+        // TODO
+        soft m_cfg_set_default_value_en == 0;
+    }
+
+    `uvm_object_utils_begin({{ bt_name }}_reg_tbl_cfg)
+        `uvm_field_int(m_cfg_set_default_value_en, UVM_ALL_ON)
+        {% for reg in results %}
+            {% set regname = "m_{}".format(reg.name) %}
+            {% if reg.depth > 1 %}
+        `uvm_field_sarray_int({{ regname | lalign(mix_len) }}, UVM_ALL_ON)
+                {% for field in reg.subpart %}
+                    {% set m_reg_field_name = "m_{}_{}".format(reg.name, field.name)  %}
+        `uvm_field_sarray_int({{ m_reg_field_name | lalign(mix_len)  }}, UVM_ALL_ON)
+                {% endfor %}
+            {% else %}
+        `uvm_field_int({{ regname | lalign(mix_len+7) }}, UVM_ALL_ON)
+                {% for field in reg.subpart %}
+                    {% set m_reg_field_name = "m_{}_{}".format(reg.name, field.name)  %}
+        `uvm_field_int({{ m_reg_field_name | lalign(mix_len+7)  }}, UVM_ALL_ON)
+                {% endfor %}
+            {% endif %}
+        {% endfor %}
+    `uvm_object_utils_end
+
+    extern function new(string name = "{{ bt_name }}_reg_tbl_cfg");
+    extern function void post_randomize();
+    extern virtual function void do_packed();
+    extern virtual function void do_unpacked();
+    extern virtual function void set_default_value();
+
+endclass
+
+function {{ bt_name }}_reg_tbl_cfg::new(string name = "{{ bt_name }}_reg_tbl_cfg");
+    super.new(name);
+endfunction
+
+function void {{ bt_name }}_reg_tbl_cfg::set_default_value();
+    {% for reg in results %}
+        {% if reg.depth > 1 %}
+    // {{ reg.name }}
+    foreach(m_{{ reg.name }}[i]) begin
+            {% for field in reg.subpart %}
+            {% set reg_field_name = "m_{}_{}[i]".format(reg.name, field.name) %}
+            {% set max_reg_field_len = max_reg_name_len + max_field_name_len %}
+        {{ reg_field_name | lalign(max_reg_field_len) }} = {{ field.default_value }};
+            {% endfor %}
+    end
+        {% else %}
+    // {{ reg.name }}
+            {% for field in reg.subpart %}
+            {% set reg_field_name = "m_{}_{}".format(reg.name, field.name) %}
+            {% set max_reg_field_len = max_reg_name_len + max_field_name_len %}
+    {{ reg_field_name | lalign(max_reg_field_len) }} = {{ field.default_value }};
+            {% endfor %}
+        {% endif %}
+    {% endfor %}
+endfunction
+
+function void {{ bt_name }}_reg_tbl_cfg::do_packed();
+    {% for reg in results %}
+    {% if reg.depth > 1 %}
+    foreach(m_{{ reg.name }}[i]) begin
+        m_{{ reg.name }}[i] = {
+            {% for field in reg.subpart %}
+            m_{{ reg.name }}_{{ field.name }}[i]{% if not loop.last %},{% endif %}
+
+            {% endfor %}
+        };
+    end
+    {% else %}
+    m_{{ reg.name }} = {
+        {% for field in reg.subpart %}
+        m_{{ reg.name }}_{{ field.name }}{% if not loop.last %},{% endif %}
+
+        {% endfor %}
+    };
+    {% endif %}
+
+    {% endfor %}
+endfunction
+
+function void {{ bt_name }}_reg_tbl_cfg::do_unpacked();
+    {% for reg in results %}
+    {% if reg.depth > 1 %}
+    foreach(m_{{ reg.name }}[i]) begin
+        {
+            {% for field in reg.subpart %}
+            m_{{ reg.name }}_{{ field.name }}[i]{% if not loop.last %},{% endif %}
+
+            {% endfor %}
+        } = m_{{ reg.name }}[i];
+    end
+    {% else %}
+    {
+        {% for field in reg.subpart %}
+        m_{{ reg.name }}_{{ field.name }}{% if not loop.last %},{% endif %}
+
+        {% endfor %}
+    } = m_{{ reg.name }};
+    {% endif %}
+
+    {% endfor %}
+endfunction
+
+function void {{ bt_name }}_reg_tbl_cfg::post_randomize();
+    if(m_cfg_set_default_value_en) begin
+        this.set_default_value();
+    end
+    this.do_packed();
+endfunction

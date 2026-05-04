@@ -43,6 +43,15 @@ nebula-matrix-skills/
 │           ├── SKILL.md         # 技能主文件
 │           ├── references/      # 参考文档
 │           └── scripts/         # 执行脚本
+├── nbl-gen-reg/                  # NBL IC 寄存器生成工具插件
+│   ├── .claude-plugin/
+│   │   └── plugin.json          # 插件配置
+│   ├── skills/
+│   │   └── nbl-gen-reg/
+│   │       ├── SKILL.md         # 技能主文件
+│   │       ├── references/      # 参考文档
+│   │       └── scripts/         # Python 代码与 CLI
+│   └── README.md
 └── README.md                     # 本文件
 ```
 
@@ -123,6 +132,22 @@ nebula-matrix-skills/
 - 自动生成 Feature / SubFeature / Testpoint 层级编码 ID
 - 提供 `nbl-testplan` CLI 工具支持构建、格式化、合并、检查
 - 支持子 Agent 分组并行处理大文档
+
+### nbl-gen-reg
+
+**描述**: NBL IC寄存器生成工具插件。从Excel寄存器手册提取数据，生成reg_slv Verilog、UVM RAL模型、寄存器配置表，支持数据校验和多维度筛选
+
+**分类**: development
+
+**标签**: register, verilog, uvm, ral, chip, verification
+
+**功能**:
+- 从Excel寄存器手册提取结构化JSON数据，支持单文件或目录批量提取
+- 执行常规数据一致性检查和CIF地址范围校验
+- 按BT/register/field级别多维度条件筛选寄存器数据
+- 生成reg_slv Verilog模块（支持APB/AXI-Lite总线接口）
+- 生成UVM RAL模型（支持单Block和系统级两种模式）
+- 生成寄存器配置表（SystemVerilog），支持单BT和多BT合并输出
 
 ## 如何使用
 

@@ -1,0 +1,15 @@
+// 所有寄存器和表项结构体声明
+{% for reg in results %}
+typedef struct packed {
+    {% for field in reg.subpart %}
+    {% if field.bits > 1 %}
+    bit [{{ field.bits | lalign(max_field_dw_len)}}-1:0]    {{ field.name | lalign(max_field_name_len) }};
+    {% else %}
+    bit {{ "" | lalign(max_field_dw_len+6)}}    {{ field.name | lalign(max_field_name_len) }};
+    {% endif %}
+    {% endfor %}
+} {{ reg.name }}_t;
+{% if not loop.last %}
+
+{% endif %}
+{% endfor %}

@@ -1,0 +1,42 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "gen_reg_tools"
+version = "2.0.0"
+description = "Unified register generation tools: extractor, reg_slv, RAL, cfg"
+requires-python = ">=3.10"
+dependencies = [
+    "xlrd>=1.2.0,<2.0.0",
+    "openpyxl>=3.0.0",
+    "jinja2>=3.0.0",
+    "typer>=0.9.0",
+    "typing-extensions>=4.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-cov>=4.0.0",
+    "black>=23.0.0",
+    "ruff>=0.1.0",
+]
+
+[project.scripts]
+gen-reg = "gen_reg_tools.cli.main:app"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+
+[tool.black]
+line-length = 120
+target-version = ['py310']
+
+[tool.ruff]
+line-length = 120
+select = ["E", "F", "W", "I"]
+ignore = ["E501"]

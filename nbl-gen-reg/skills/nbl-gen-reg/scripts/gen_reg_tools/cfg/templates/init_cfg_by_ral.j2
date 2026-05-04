@@ -1,0 +1,87 @@
+`ifndef {{bt_name|upper}}_RAL_PATH
+    `define {{bt_name|upper}}_RAL_PATH            m_env.m_ral
+`endif
+
+`ifndef {{bt_name|upper}}_REG_TBL_CFG_PATH
+    `define {{bt_name|upper}}_REG_TBL_CFG_PATH    m_env.m_cfg.m_reg_tbl_cfg
+`endif
+
+task cfg_{{ bt_name }}_reg_by_ral();
+    uvm_status_e    status;
+    uvm_path_e      path;
+    uvm_reg_data_t  wr_data, rd_data;
+
+    if(`{{bt_name|upper}}_REG_TBL_CFG_PATH.m_cfg_bkdr_en==0)  path=UVM_FRONTDOOR;
+    else    path=UVM_BACKDOOR;
+
+    {% for reg in results %}
+    {% if reg.type in ['reg', 'wide-reg'] %}
+    {% if reg.depth > 1 %}
+    foreach(`{{bt_name|upper}}_REG_TBL_CFG_PATH.m_{{ reg.name }}[i]) begin
+        wr_data = `{{bt_name|upper}}_REG_TBL_CFG_PATH.m_{{ reg.name }}[i];
+        `{{bt_name|upper}}_RAL_PATH.{{ reg.name }}[i].write(status, wr_data, path);
+        `uvm_info(get_full_name(), $sformatf("set {{ reg.name }} init with '%0h", wr_data), UVM_MEDIUM)
+        if(`{{bt_name|upper}}_REG_TBL_CFG_PATH.m_cfg_reg_rd_test_en) begin
+            `{{bt_name|upper}}_RAL_PATH.{{ reg.name }}[i].read(status, rd_data, path);
+            wr_data &= 'h{{ reg.mask }};
+            if(wr_data != rd_data) begin
+                `uvm_error(get_full_name(), $sformatf("reg_cfg_rd_test {{ reg.name }}[%0d] ERROR, wr_data('h%0h) != rd_data('h%0h)", i, wr_data, rd_data))
+            end
+        end
+    end
+    {% else %}
+    wr_data = `{{bt_name|upper}}_REG_TBL_CFG_PATH.m_{{ reg.name }};
+    `{{bt_name|upper}}_RAL_PATH.{{ reg.name }}.write(status, wr_data, path);
+    `uvm_info(get_full_name(), $sformatf("set {{ reg.name }} init with '%0h", wr_data), UVM_MEDIUM)
+    if(`{{bt_name|upper}}_REG_TBL_CFG_PATH.m_cfg_reg_rd_test_en) begin
+        `{{bt_name|upper}}_RAL_PATH.{{ reg.name }}.read(status, rd_data, path);
+        wr_data &= 'h{{ reg.mask }};
+        if(wr_data != rd_data) begin
+            `uvm_error(get_full_name(), $sformatf("reg_cfg_rd_test {{ reg.name }} ERROR, wr_data('h%0h) != rd_data('h%0h)", wr_data, rd_data))
+        end
+    end
+    {% endif %}
+
+    {% endif %}
+    {% endfor %}
+endtask
+
+task cfg_{{ bt_name }}_tbl_by_ral();
+    uvm_status_e    status;
+    uvm_path_e      path;
+    uvm_reg_data_t  wr_data, rd_data;
+
+    if(`{{bt_name|upper}}_REG_TBL_CFG_PATH.m_cfg_bkdr_en==0)  path=UVM_FRONTDOOR;
+    else    path=UVM_BACKDOOR;
+
+    {% for reg in results %}
+    {% if reg.type == 'tbl' %}
+    {% if reg.depth > 1 %}
+    foreach(`{{bt_name|upper}}_REG_TBL_CFG_PATH.m_{{ reg.name }}[i]) begin
+        wr_data = `{{bt_name|upper}}_REG_TBL_CFG_PATH.m_{{ reg.name }}[i];
+        `{{bt_name|upper}}_RAL_PATH.{{ reg.name }}.write(status, i, wr_data, path);
+        `uvm_info(get_full_name(), $sformatf("set {{ reg.name }}[%0d] init with '%0h", i, wr_data), UVM_MEDIUM)
+        if(`{{bt_name|upper}}_REG_TBL_CFG_PATH.m_cfg_reg_rd_test_en) begin
+            `{{bt_name|upper}}_RAL_PATH.{{ reg.name }}.read(status, i, rd_data, path);
+            wr_data &= 'h{{ reg.mask }};
+            if(wr_data != rd_data) begin
+                `uvm_error(get_full_name(), $sformatf("reg_cfg_rd_test {{ reg.name }}[%0d] ERROR, wr_data('h%0h) != rd_data('h%0h)", i, wr_data, rd_data))
+            end
+        end
+    end
+    {% else %}
+    wr_data = `{{bt_name|upper}}_REG_TBL_CFG_PATH.m_{{ reg.name }};
+    `{{bt_name|upper}}_RAL_PATH.{{ reg.name }}.write(status, 0, wr_data, path);
+    `uvm_info(get_full_name(), $sformatf("set {{ reg.name }} init with '%0h", wr_data), UVM_MEDIUM)
+    if(`{{bt_name|upper}}_REG_TBL_CFG_PATH.m_cfg_reg_rd_test_en) begin
+        `{{bt_name|upper}}_RAL_PATH.{{ reg.name }}.read(status, 0, rd_data, path);
+        wr_data &= 'h{{ reg.mask }};
+        if(wr_data != rd_data) begin
+            `uvm_error(get_full_name(), $sformatf("reg_cfg_rd_test {{ reg.name }} ERROR, wr_data('h%0h) != rd_data('h%0h)", wr_data, rd_data))
+        end
+    end
+    {% endif %}
+
+    {% endif %}
+    {% endfor %}
+endtask
