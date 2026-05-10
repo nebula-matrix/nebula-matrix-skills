@@ -25,7 +25,7 @@
 ## 3. 弹性执行策略
 
 **策略选择**（由主 Agent 根据内容规模决定）：
-- **小规模文档（`sections.json` 中各章节 `line_count` 总和 ≤ 500）**：主 Agent 直接串行处理，或自己拆分后逐章分析
+- **小规模文档（`{doc_name}_docmeta.json` 中各章节 `line_count` 总和 ≤ 500）**：主 Agent 直接串行处理，或自己拆分后逐章分析
 - **大规模文档（`line_count` 总和 > 500）**：按 Feature 域分组并行，各 subagent 生成 partial 文件，最后主 Agent 串行合并
 - **并发上限**：同时运行的 subagent 不超过 3 个，防止 API 访问限制
 
@@ -34,7 +34,7 @@
    - 每个 Feature 作为一个独立的分析单元，完整分配给单个 subagent
    - 同一 Feature 的全部 SubFeature 和 Testpoint 由同一个 subagent 负责，合并后该 Feature 内容自然连续
    - 将关联性强的相邻 Feature 合并到同一组，控制每组涉及的章节总行数在合理范围
-2. 针对每组 Feature，主 Agent 创建一个独立的 subagent，将对应 Feature 及其涉及的章节信息作为上下文传入；该 subagent 自行读取 `sections.json` 定位相关章节、逐节分析并生成 `.tp_cache/partial_{N}.md`
+2. 针对每组 Feature，主 Agent 创建一个独立的 subagent，将对应 Feature 及其涉及的章节信息作为上下文传入；该 subagent 使用 `nbl-testplan doc-meta read .tp_cache/{doc_name}_docmeta.json <section_ids>` 读取相关章节内容、逐节分析并生成 `.tp_cache/partial_{N}.md`
 3. 主 Agent 调用 `nbl-testplan merge` 合并所有 partial 文件到 `testplan_draft.md`
    ```bash
    nbl-testplan merge .tp_cache/testplan_draft.md .tp_cache/partial_*.md
@@ -225,7 +225,7 @@
 ## 8. 文件管理
 
 **核心文件**：
-- `.tp_cache/sections.json`：阶段1输出，粗框架划分
+- `.tp_cache/{doc_name}_docmeta.json`：阶段1输出，粗框架划分（含嵌套 subsection ID、`source_file` 路径）
 - `.tp_cache/feature_plan.json`：阶段2输出，Feature 初步规划（动态更新）
 - `.tp_cache/testplan_draft.md`：阶段3主工作文件，Markdown 为唯一数据源
 - `.tp_cache/features.json`：阶段3b输出，统一三级结构数据

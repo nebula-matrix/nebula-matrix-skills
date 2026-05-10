@@ -7,7 +7,7 @@
 
 Agent 执行：
 1. 检测到 docx 格式，调用 nbl-docx-to-markdown 转换 → `.tp_cache/Orion_UVN_Functional_Specification_decode_work/markdown_output/Orion_UVN_Functional_Specification_decode.md`
-2. 调用 section_analyzer.py -l 1 生成 .tp_cache/sections.json（11个章节）
+2. 调用 nbl-testplan doc-meta generate -l 1 生成 .tp_cache/{doc_name}_docmeta.json（11个章节）
 3. 调用 nbl-testplan init 创建 .tp_cache/features.json
 4. 调用独立 subagent 分析文档，生成 .tp_cache/testplan_draft.md 骨架
 5. 处理章节（各章节 `line_count` 总和约 1514 行）：

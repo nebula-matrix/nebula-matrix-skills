@@ -28,7 +28,7 @@ CWD/
 │   ├── {doc_name}_decode_work/             # 阶段0：docx转换临时目录
 │   │   └── markdown_output/
 │   │       └── {doc_name}_decode.md        # 转换后的markdown
-│   ├── sections.json                       # 阶段1：章节粗划分
+│   ├── {doc_name}_docmeta.json            # 阶段1：章节粗划分
 │   ├── feature_plan.json                   # 阶段2：Feature规划
 │   ├── testplan_draft.md                     # 阶段3：Markdown主工作文件
 │   └── features.json                       # 阶段3b：统一数据结构
@@ -43,8 +43,8 @@ CWD/
 | 阶段 | 动作 | 核心命令 | 输入 | 输出 |
 |------|------|----------|------|------|
 | 0 | 格式检测/转换 | 调用 `nbl-docx-to-markdown` | `.docx` | `.tp_cache/{doc_name}_decode_work/markdown_output/{doc_name}_decode.md` |
-| 1 | 章节粗划分 | `scripts/section_analyzer.py` | `.tp_cache/{doc_name}_decode_work/markdown_output/{doc_name}_decode.md` | `.tp_cache/sections.json` |
-| 2 | Feature 规划 | Subagent 分析全文 | `.tp_cache/sections.json` | `.tp_cache/feature_plan.json` + `.tp_cache/testplan_draft.md` 骨架 |
+| 1 | 章节粗划分 | `nbl-testplan doc-meta generate` | `.tp_cache/{doc_name}_decode_work/markdown_output/{doc_name}_decode.md` | `.tp_cache/{doc_name}_docmeta.json` |
+| 2 | Feature 规划 | Subagent 分析全文 | `.tp_cache/{doc_name}_docmeta.json` | `.tp_cache/feature_plan.json` + `.tp_cache/testplan_draft.md` 骨架 |
 | 3 | 逐章节分析 | Subagent 串行追加到 `.tp_cache/testplan_draft.md` | 章节内容 | `.tp_cache/testplan_draft.md` |
 | 3b | Markdown → JSON | `nbl-testplan build` | `.tp_cache/testplan_draft.md` | `.tp_cache/features.json` |
 | 4 | 生成文档 | `nbl-testplan format` | `.tp_cache/features.json` | `{doc_name}_testplan.md` |
@@ -61,41 +61,80 @@ CWD/
 
 ## 阶段1：章节划分（粗框架）
 
-使用 `scripts/section_analyzer.py` 进行粗框架划分：
+使用 `nbl-testplan doc-meta generate` 进行粗框架划分：
 
 ```bash
-python3 scripts/section_analyzer.py .tp_cache/{doc_name}_decode_work/markdown_output/{doc_name}_decode.md -l <1|2|3> -o .tp_cache/sections.json
+nbl-testplan doc-meta generate \
+  .tp_cache/{doc_name}_decode_work/markdown_output/{doc_name}_decode.md \
+  -o .tp_cache/{doc_name}_docmeta.json
 ```
 
-**参数说明**：[参数详情见 CLI 参考](references/cli_reference.md)
+**参数说明**：
+- `-o, --output`: 输出 JSON 文件路径（可选，默认输出到控制台）
+- `--max-depth`: 最大解析深度，`1`=只解析 `#` 一级标题，`2`=解析到 `##` 二级标题，`3`=解析到 `###` 三级标题。默认 `2`
 
-**输出结构**：包含每个章节的标题、层级、行号范围（`line_start`/`line_end`）、内容预览。
+**输出结构**：`.tp_cache/{doc_name}_docmeta.json` 包含 `document_title`、`split_config`、嵌套 `sections` 数组。每个 section 含 `id`、`title`、`level`、`line_start`/`line_end`、`line_count`，以及递归嵌套的 `subsections`（最多 `--max-depth` 层）。
 
-**重要说明**：这一步只做粗框架划分，不做智能推荐或过滤；后续阶段3根据行号范围提取完整章节内容。
+**重要说明**：
+- 顶层始终按 `# ` 一级标题切分，子章节按嵌套层级递归提取
+- 默认深度为 2，避免生成过细的嵌套；如叶子章节超过 1000 行，脚本会自动打印警告建议增加 `--max-depth`
+- 这一步只做粗框架划分，不做智能推荐或过滤
+- section ID 格式：`S001`（一级）、`S006.001`（二级）、`S009.001.001`（三级）
+- `source_file` 字段自动记录原始 markdown 路径，后续 `doc-meta read` 可直接定位内容
+- 后续阶段3通过 `doc-meta read` 按 section ID 提取完整章节内容，无需直接处理原始文档
 
 ## 阶段2：Feature 初步规划
 
 调用**独立 subagent** 分析整个文档，生成 Feature 初步规划。
 
-**Subagent 任务**：理解模块功能架构，识别主要功能域（Feature），为每个 Feature 分配优先级。
+**前置准备**：先用 `doc-meta tree` 查看章节结构，获取 section ID 映射关系：
+
+```bash
+nbl-testplan doc-meta tree .tp_cache/{doc_name}_docmeta.json
+```
+
+输出示例（带层级 ID）：
+```
+[S001] # 概述
+[S002] # 功能架构
+[S003] # 队列管理
+  [S003.001] ## 队列创建
+  [S003.002] ## 队列映射
+[S004] # 中断处理
+  [S004.001] ## 中断触发条件
+  [S004.002] ## 中断清除机制
+```
+
+**Subagent 任务**：理解模块功能架构，识别主要功能域（Feature），为每个 Feature 分配优先级，并基于 `doc-meta tree` 输出映射相关 section ID。
 
 **输出文件**：`.tp_cache/feature_plan.json`
 
 ```json
 {
-  "features": [#
+  "features": [
     {
       "feature_id": "队列管理",
       "feature_name": "队列管理",
       "description": "队列创建、配置、映射等核心功能",
       "priority": "HIGH",
-      "sections_covered": ["S001", "S002"]
+      "sections_covered": ["S003", "S003.001", "S003.002"]
+    },
+    {
+      "feature_id": "中断处理",
+      "feature_name": "中断处理",
+      "description": "中断触发、清除、屏蔽机制",
+      "priority": "HIGH",
+      "sections_covered": ["S004", "S004.001", "S004.002"]
     }
   ]
 }
 ```
 
-**规则**：Feature 划分要符合验证思路，不局限于文档章节结构；只要 feature 的 name，不需要 ID，因为 ID 通过 name 编码自动生成。
+**规则**：
+- Feature 划分要符合验证思路，不局限于文档章节结构
+- `sections_covered` 填写与 Feature 相关的 section ID（支持多级 ID，如 `S003.001`）
+- 只要 feature 的 name，不需要 ID，因为 ID 通过 name 编码自动生成
+- Subagent 可直接用 `doc-meta read .tp_cache/{doc_name}_docmeta.json S003,S003.001` 读取相关章节内容辅助分析
 
 **动态调整**：后续阶段如发现 Feature 划分不合理，可直接在 `.tp_cache/testplan_draft.md` 中追加新的 `## Feature` heading。
 
@@ -111,7 +150,7 @@ python3 scripts/section_analyzer.py .tp_cache/{doc_name}_decode_work/markdown_ou
 - 输入为 `Orion_UVN_Functional_Specification.docx` → `# Orion UVN 功能规格验证测试计划`
 - 输入为 `PA_Queue_Management.docx` → `# PA 队列管理验证测试计划`
 
-骨架模板：
+骨架模板（`sections_covered` 从 `doc-meta tree` 获取）：
 
 ```markdown
 # {doc_name} 验证测试计划
@@ -120,13 +159,13 @@ python3 scripts/section_analyzer.py .tp_cache/{doc_name}_decode_work/markdown_ou
 
 - description: VirtIO队列配置、队列映射等核心功能
 - priority: HIGH
-- sections_covered: S001,S002
+- sections_covered: S003,S003.001,S003.002
 
-## 描述符预取
+## 中断处理
 
-- description: 描述符预取机制验证
-- priority: MID
-- sections_covered: S003
+- description: 中断触发、清除、屏蔽机制
+- priority: HIGH
+- sections_covered: S004,S004.001,S004.002
 ```
 
 ### 3b. 章节处理策略
@@ -137,6 +176,7 @@ python3 scripts/section_analyzer.py .tp_cache/{doc_name}_decode_work/markdown_ou
 - 适用：各章节 `line_count` 总和较少，主 Agent 上下文能覆盖
 - 方式：主 Agent 直接逐feature分析，或自行分解后串行处理
 - 优点：无文件竞争，跨章节联动分析可实时参考前面结果
+- 内容获取：使用 `nbl-testplan doc-meta read .tp_cache/{doc_name}_docmeta.json S003,S003.001` 读取相关章节内容
 
 **策略二：创建 subagent 分组并行（用于大文档）**
 - 适用：各章节 `line_count` 总和较大（> 700 行），主 Agent 或单 subagent 上下文溢出
@@ -148,7 +188,7 @@ python3 scripts/section_analyzer.py .tp_cache/{doc_name}_decode_work/markdown_ou
   ## 队列管理
   - description: 队列配置、映射、复位...
   - priority: HIGH
-  - sections_covered: S001,S022
+  - sections_covered: S003,S003.001,S003.002
 
   ### 队列深度配置
   - sub_feature_name: 队列深度配置
@@ -161,8 +201,8 @@ python3 scripts/section_analyzer.py .tp_cache/{doc_name}_decode_work/markdown_ou
   | ...
   ```
 - **执行流程**：
-  1. 主 Agent 创建 subagent，传入 Feature 列表及章节信息
-  2. Subagent 读取 `sections.json` 定位章节，逐节分析后输出 `.tp_cache/partial_{N}.md`
+  1. 主 Agent 创建 subagent，传入 Feature 列表及 `sections_covered` 中的 section ID 列表
+  2. Subagent 使用 `nbl-testplan doc-meta read .tp_cache/{doc_name}_docmeta.json <section_ids>` 读取相关章节内容，逐节分析后输出 `.tp_cache/partial_{N}.md`
   3. 全部完成后主 Agent 调用 `nbl-testplan merge .tp_cache/testplan_draft.md .tp_cache/partial_*.md` 合并
 - **并发控制**：同时运行的 subagent 不超过 3 个
 
@@ -188,7 +228,7 @@ Subagent 统一输出独立的 partial 文件，按 `## Feature → ### SubFeatu
 
 - description: 队列配置、映射、复位...
 - priority: HIGH
-- sections_covered: S001,S022
+- sections_covered: S003,S003.001,S003.002
 
 ### 队列深度配置
 
@@ -279,11 +319,23 @@ Feature / SubFeature ID 由名称自动编码生成：
 | 文件 | 作用 | 生命周期 |
 |------|------|----------|
 | `.tp_cache/{doc_name}_decode_work/markdown_output/{doc_name}_decode.md` | 转换后的输入规格文档 | 阶段0输出，阶段1-3消费 |
-| `.tp_cache/sections.json` | 章节粗划分结果 | 阶段1输出，阶段3参考 |
+| `.tp_cache/{doc_name}_docmeta.json` | 章节粗划分结果（含嵌套 subsection ID、行号范围、`source_file` 路径） | 阶段1输出，阶段2-3通过 `doc-meta tree/read/info` 消费 |
 | `.tp_cache/feature_plan.json` | Feature 初步规划 | 阶段2输出，可动态更新 |
 | `.tp_cache/testplan_draft.md` | **阶段3主工作文件**，包含所有 heading + 属性块 + 表格 | 持续追加，阶段3b前完成 |
 | `.tp_cache/features.json` | 统一的三级结构数据（Feature → SubFeature → Testpoint） | 阶段3b生成，阶段4消费 |
 | `{doc_name}_testplan.md` | 最终测试计划文档 | CWD，阶段4输出，文件名关联输入文档名 |
+
+## doc-meta 命令速查
+
+阶段1-3 通过 `nbl-testplan doc-meta` 子命令操作 `.tp_cache/{doc_name}_docmeta.json`：
+
+| 子命令 | 用途 | 示例 |
+|--------|------|------|
+| `generate` | 从 markdown 生成章节元数据 | `nbl-testplan doc-meta generate spec.md -l 1 -o {doc_name}_docmeta.json` |
+| `tree` | 显示章节目录树（带层级 ID） | `nbl-testplan doc-meta tree {doc_name}_docmeta.json` |
+| `stats` | 显示文档统计概览 | `nbl-testplan doc-meta stats {doc_name}_docmeta.json` |
+| `read` | 读取指定章节内容（支持多选，逗号分隔） | `nbl-testplan doc-meta read {doc_name}_docmeta.json S003,S003.001` |
+| `info` | 查看指定章节的元数据 | `nbl-testplan doc-meta info {doc_name}_docmeta.json S003.001` |
 
 ## 参考文档
 
@@ -301,6 +353,6 @@ Feature / SubFeature ID 由名称自动编码生成：
 
 ## 注意事项
 
-1. **弹性处理**：主 Agent 根据 `sections.json` 中各章节 `line_count` 总和判断规模——≤500 行串行处理，>500 行按 Feature 域创建 subagent 分组并行（2-3 个），最后串行合并，避免 API 访问限制并保证后续章节可参考前面结果。每个 subagent 工作前必须先读取 `.tp_cache/testplan_draft.md` 获取当前完整内容。
+1. **弹性处理**：主 Agent 根据 `{doc_name}_docmeta.json` 中各章节 `line_count` 总和判断规模——≤500 行串行处理，>500 行按 Feature 域创建 subagent 分组并行（2-3 个），最后串行合并，避免 API 访问限制并保证后续章节可参考前面结果。每个 subagent 工作前必须先读取 `.tp_cache/testplan_draft.md` 获取当前完整内容；subagent 读取原始规格内容时通过 `nbl-testplan doc-meta read .tp_cache/{doc_name}_docmeta.json <section_ids>` 按 ID 提取，不直接操作原始 markdown。
 2. **Markdown 为唯一数据源**：阶段3全程不操作 `.tp_cache/features.json`，所有修改通过编辑 `.tp_cache/testplan_draft.md` 完成，最后 `build` 生成。
 3. **`testplan_formatter.py` 为旧版工具**：用于从多个 `S*_testpoints.json` 汇总生成测试计划。当前工作流使用统一的 `features.json` + `nbl-testplan format`，无需此工具。

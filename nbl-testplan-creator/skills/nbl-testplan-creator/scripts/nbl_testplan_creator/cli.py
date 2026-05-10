@@ -5,7 +5,7 @@ import sys
 from pathlib import Path
 
 from nbl_testplan_creator.core.json_manager import FeatureJSON
-from nbl_testplan_creator.commands import init, tree, add, view, delete, edit, build, import_cmd, skip, format as fmt, merge, check
+from nbl_testplan_creator.commands import init, tree, add, view, delete, edit, build, import_cmd, skip, format as fmt, merge, check, doc_meta
 
 
 def _add_file_arg(parser):
@@ -99,6 +99,46 @@ def build_parser() -> argparse.ArgumentParser:
     p_check = sub.add_parser('check', help='检查 markdown 格式完整性')
     p_check.add_argument('md_file', help='输入 markdown 文件')
 
+    # doc-meta
+    p_docmeta = sub.add_parser('doc-meta', help='文档元数据处理（章节分析、目录树、统计、内容读取）')
+    docmeta_sub = p_docmeta.add_subparsers(dest='docmeta_command')
+
+    # doc-meta generate
+    p_gen = docmeta_sub.add_parser('generate', help='从 markdown 生成章节元数据')
+    p_gen.add_argument('input_file', help='输入的 markdown 文件路径')
+    p_gen.add_argument('--max-depth', type=int, choices=[1, 2, 3], default=2,
+                       help='最大解析深度 (1=只解析#, 2=解析到##, 3=解析到###)，默认为2')
+    p_gen.add_argument('-o', '--output', help='输出 JSON 文件路径（可选，默认输出到控制台）')
+    p_gen.add_argument('--encoding', default='utf-8', help='输入文件编码，默认为 utf-8')
+    p_gen.add_argument('-q', '--quiet', action='store_true', help='静默模式，只输出结果')
+    p_gen.add_argument('--include-full-content', action='store_true',
+                       help='JSON 中包含完整章节内容（不只是 preview）')
+
+    # doc-meta tree
+    p_tree_cmd = docmeta_sub.add_parser('tree', help='基于 sections.json 显示目录树')
+    p_tree_cmd.add_argument('json_file', help='sections.json 文件路径')
+    p_tree_cmd.add_argument('--min-level', type=int, help='过滤 heading 最小层级')
+    p_tree_cmd.add_argument('--max-level', type=int, help='过滤 heading 最大层级')
+    p_tree_cmd.add_argument('--encoding', default='utf-8', help='输入文件编码，默认为 utf-8')
+    p_tree_cmd.add_argument('-q', '--quiet', action='store_true', help='静默模式')
+
+    # doc-meta stats
+    p_stats = docmeta_sub.add_parser('stats', help='基于 sections.json 显示统计概览')
+    p_stats.add_argument('json_file', help='sections.json 文件路径')
+    p_stats.add_argument('--encoding', default='utf-8', help='输入文件编码，默认为 utf-8')
+
+    # doc-meta read
+    p_read_cmd = docmeta_sub.add_parser('read', help='基于 sections.json 读取指定章节内容')
+    p_read_cmd.add_argument('json_file', help='sections.json 文件路径')
+    p_read_cmd.add_argument('section_ids', help='章节 ID 列表，逗号分隔（如 S006,S009.001）')
+    p_read_cmd.add_argument('-o', '--output', help='输出到文件（可选，默认输出到控制台）')
+    p_read_cmd.add_argument('--encoding', default='utf-8', help='输入文件编码，默认为 utf-8')
+
+    # doc-meta info
+    p_info_cmd = docmeta_sub.add_parser('info', help='查看指定章节的元数据')
+    p_info_cmd.add_argument('json_file', help='sections.json 文件路径')
+    p_info_cmd.add_argument('section_id', help='章节 ID（如 S006 或 S009.001）')
+
     return parser
 
 
@@ -117,6 +157,8 @@ def main(argv=None):
         sys.exit(merge.cmd_merge(None, args))
     elif args.command == 'check':
         sys.exit(check.cmd_check(None, args))
+    elif args.command == 'doc-meta':
+        sys.exit(doc_meta.cmd_doc_meta(None, args))
 
     # Commands needing FeatureJSON
     manager = FeatureJSON(args.file)

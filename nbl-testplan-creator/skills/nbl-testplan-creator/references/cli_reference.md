@@ -203,18 +203,77 @@ nbl-testplan format <file> --format <md|csv|excel> [-o <output>]
 
 ---
 
-## scripts/section_analyzer.py
+## nbl-testplan doc-meta — 文档元数据处理
+
+文档章节分析、目录树、统计、内容读取的统一入口。
+
+### doc-meta generate — 从 markdown 生成章节元数据
 
 ```bash
-python3 scripts/section_analyzer.py .tp_cache/{doc_name}_decode_work/markdown_output/{doc_name}_decode.md -l <1|2|3> -o .tp_cache/sections.json
+nbl-testplan doc-meta generate <input_file> [-o <output>] [--max-depth <depth>] [--include-full-content]
 ```
 
-未迁移至 CLI，仍为独立脚本。
+- `input_file`: 输入 markdown 文件路径
+- `-o` / `--output`: 输出 JSON 文件路径（默认输出到控制台）
+- `--max-depth`: 最大解析深度，`1`=只解析 `#` 一级标题，`2`=解析到 `##` 二级标题，`3`=解析到 `###` 三级标题。默认 `2`
+- `--include-full-content`: JSON 中包含完整章节内容（不只是 preview）
+- `--encoding`: 输入文件编码（默认 `utf-8`）
+- `-q` / `--quiet`: 静默模式
 
-- `-l` / `--split-level`: 章节切分层级
-  - `1` = 按 `#` 一级标题切分（默认）
-  - `2` = 按 `##` 二级标题切分
-  - `3` = 按 `###` 三级标题切分
-- `-o`: 输出 JSON 文件路径
+输出文件：`.tp_cache/{doc_name}_docmeta.json`
 
-输出包含每个章节的 `id`、`title`、`level`、`line_start`、`line_end`、`content_preview`。
+输出包含 `document_title`、`split_config`、嵌套 `sections` 数组。每个 section 含 `id`（如 `S001`、`S003.001`）、`title`、`level`、`line_start`/`line_end`、`line_count`、`subsections`（递归嵌套，最多 `--max-depth` 层）。
+
+**行为**：
+- 始终按 `# ` 一级标题切分顶层 sections，然后递归提取子章节，直到 `--max-depth` 指定的层级
+- 分析完成后自动检查叶子节点行数，如有超过 1000 行的章节，打印警告并建议增加 `--max-depth`
+
+### doc-meta tree — 显示章节目录树
+
+```bash
+nbl-testplan doc-meta tree <json_file> [--min-level <n>] [--max-level <n>]
+```
+
+- `json_file`: `{doc_name}_docmeta.json` 文件路径
+- `--min-level`: 过滤 heading 最小层级
+- `--max-level`: 过滤 heading 最大层级
+
+输出示例：
+```
+[S001] # 概述
+[S002] # 功能架构
+[S003] # 队列管理
+  [S003.001] ## 队列创建
+  [S003.002] ## 队列映射
+```
+
+### doc-meta stats — 显示文档统计概览
+
+```bash
+nbl-testplan doc-meta stats <json_file>
+```
+
+- `json_file`: `{doc_name}_docmeta.json` 文件路径
+
+### doc-meta read — 读取指定章节内容
+
+```bash
+nbl-testplan doc-meta read <json_file> <section_ids> [-o <output>]
+```
+
+- `json_file`: `{doc_name}_docmeta.json` 文件路径
+- `section_ids`: 章节 ID 列表，逗号分隔（如 `S006,S009.001`）
+- `-o` / `--output`: 输出到文件（可选，默认输出到控制台）
+
+支持任意层级 ID，多章节用 `\n\n---\n\n` 分隔。
+
+### doc-meta info — 查看指定章节元数据
+
+```bash
+nbl-testplan doc-meta info <json_file> <section_id>
+```
+
+- `json_file`: `{doc_name}_docmeta.json` 文件路径
+- `section_id`: 章节 ID（如 `S006` 或 `S009.001`）
+
+显示 ID、标题、层级、行号范围、行数、子章节列表等。
