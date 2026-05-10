@@ -1,0 +1,6 @@
+{
+  "name": "nbl-ic-verification",
+  "version": "1.0.0",
+  "description": "NBL IC 验证工具集合，包含 DOCX 转 Markdown 和测试计划生成等技能，面向芯片验证工程师提供文档转换与测试点生成能力",
+  "skills": "./skills"
+}

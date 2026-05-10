@@ -26,16 +26,23 @@ nebula-matrix-skills/
 │           ├── SKILL.md         # 技能主文件
 │           ├── references/      # 参考文档
 │           └── scripts/         # 执行脚本
-├── nbl-docx-to-markdown/         # NBL DOCX 转 Markdown 插件
+├── nbl-ic-verification/          # NBL IC 验证工具集合插件
 │   ├── .claude-plugin/
 │   │   └── plugin.json          # 插件配置
-│   └── skills/
-│       └── nbl-docx-to-markdown/
-│           ├── SKILL.md         # 技能主文件
-│           ├── assets/          # 资源文件
-│           ├── references/      # 参考文档
-│           └── scripts/         # 执行脚本
-├── nbl-testplan-creator/         # NBL IC 验证测试计划生成器插件
+│   ├── skills/
+│   │   ├── nbl-docx-to-markdown/  # DOCX 转 Markdown 技能
+│   │   │   ├── SKILL.md         # 技能主文件
+│   │   │   ├── assets/          # 资源文件
+│   │   │   ├── references/      # 参考文档
+│   │   │   └── scripts/         # 执行脚本
+│   │   └── nbl-testplan-generator/ # 测试计划生成技能
+│   │       ├── SKILL.md         # 技能主文件
+│   │       ├── references/      # 参考文档
+│   │       └── scripts/         # 执行脚本
+│   ├── tests/                   # 测试文件
+│   ├── README.md                # 插件文档
+│   └── pyproject.toml           # 项目配置
+├── nbl-testplan-creator/         # NBL IC 验证测试计划生成器插件（Markdown-first）
 │   ├── .claude-plugin/
 │   │   └── plugin.json          # 插件配置
 │   └── skills/
@@ -86,15 +93,17 @@ nebula-matrix-skills/
 - 支持技能打包和验证工具
 - 帮助开发者快速创建符合规范的 Claude Code 技能
 
-### nbl-docx-to-markdown
+### nbl-ic-verification
 
-**描述**: NBL企业定制的 DOCX 转 Markdown 工具，支持复杂 Word 文档转换，包含图片、Visio图表、表格处理及技术文档优化
+**描述**: NBL IC 验证工具集合，面向芯片验证工程师提供文档转换与测试点生成能力
 
-**分类**: productivity
+**分类**: development
 
-**标签**: docx, markdown, converter, document
+**标签**: ic, verification, testplan, docx, markdown, chip
 
-**功能**:
+**包含技能**:
+
+**1. nbl-docx-to-markdown** — DOCX 转 Markdown 工具
 - 使用 LibreOffice + Pandoc 将 Word 文档转换为 Markdown
 - 支持处理图片、Visio图表，自动复制到 assets 目录
 - 保留表格为 HTML 格式以确保兼容性
@@ -102,15 +111,7 @@ nebula-matrix-skills/
 - 验证转换结果，发现结构差异时强制修复
 - 特别适用于包含寄存器描述、表项定义等技术文档
 
-### nbl-testplan-generator
-
-**描述**: 数字芯片验证测试计划生成器插件。从功能规格书（.docx）和寄存器配置手册（.xlsx）生成功能特性（Chapter 1）的结构化测试点 xlsx 文档
-
-**分类**: development
-
-**标签**: testplan, verification, chip, document
-
-**功能**:
+**2. nbl-testplan-generator** — 测试计划生成器
 - 调用 `nbl-docx-to-markdown` skill 将 Word 功能规格书转换为 Markdown
 - 将 Markdown 解析为 `spec_tree.json`，提取模块特性和交叉引用索引
 - 将寄存器手册 xlsx 解析为 `reg_info.json`
