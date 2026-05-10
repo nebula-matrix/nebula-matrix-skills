@@ -35,11 +35,14 @@ nebula-matrix-skills/
 │   │   │   ├── assets/          # 资源文件
 │   │   │   ├── references/      # 参考文档
 │   │   │   └── scripts/         # 执行脚本
-│   │   └── nbl-testplan-generator/ # 测试计划生成技能
+│   │   ├── nbl-testplan-generator/ # 测试计划生成技能
+│   │   │   ├── SKILL.md         # 技能主文件
+│   │   │   ├── references/      # 参考文档
+│   │   │   └── scripts/         # 执行脚本
+│   │   └── nbl-gen-reg/          # 寄存器生成技能
 │   │       ├── SKILL.md         # 技能主文件
 │   │       ├── references/      # 参考文档
-│   │       └── scripts/         # 执行脚本
-│   ├── tests/                   # 测试文件
+│   │       └── scripts/         # Python 代码与 CLI
 │   ├── README.md                # 插件文档
 │   └── pyproject.toml           # 项目配置
 ├── nbl-testplan-creator/         # NBL IC 验证测试计划生成器插件（Markdown-first）
@@ -50,15 +53,6 @@ nebula-matrix-skills/
 │           ├── SKILL.md         # 技能主文件
 │           ├── references/      # 参考文档
 │           └── scripts/         # 执行脚本
-├── nbl-gen-reg/                  # NBL IC 寄存器生成工具插件
-│   ├── .claude-plugin/
-│   │   └── plugin.json          # 插件配置
-│   ├── skills/
-│   │   └── nbl-gen-reg/
-│   │       ├── SKILL.md         # 技能主文件
-│   │       ├── references/      # 参考文档
-│   │       └── scripts/         # Python 代码与 CLI
-│   └── README.md
 └── README.md                     # 本文件
 ```
 
@@ -95,11 +89,11 @@ nebula-matrix-skills/
 
 ### nbl-ic-verification
 
-**描述**: NBL IC 验证工具集合，面向芯片验证工程师提供文档转换与测试点生成能力
+**描述**: NBL IC 验证工具集合，面向芯片验证工程师提供文档转换、测试点生成与寄存器建模能力
 
 **分类**: development
 
-**标签**: ic, verification, testplan, docx, markdown, chip
+**标签**: ic, verification, testplan, docx, markdown, register, chip
 
 **包含技能**:
 
@@ -119,6 +113,14 @@ nebula-matrix-skills/
 - 自动生成基于英文缩写 `_eng_id` 的 SystemVerilog 覆盖率路径（W 列）
 - 生成 `fs_reg_slv_review.md` 记录不确定内容，支持二次刷新
 
+**3. nbl-gen-reg** — 寄存器生成工具
+- 从 Excel 寄存器手册提取结构化 JSON 数据，支持单文件或目录批量提取
+- 执行常规数据一致性检查和 CIF 地址范围校验
+- 按 BT/register/field 级别多维度条件筛选寄存器数据
+- 生成 reg_slv Verilog 模块（支持 APB/AXI-Lite 总线接口）
+- 生成 UVM RAL 模型（支持单 Block 和系统级两种模式）
+- 生成寄存器配置表（SystemVerilog），支持单 BT 和多 BT 合并输出
+
 ### nbl-testplan-creator
 
 **描述**: NBL 企业 IC 验证测试计划生成器，采用 Markdown-first 工作流从规格文档逐章节生成结构化测试点
@@ -133,22 +135,6 @@ nebula-matrix-skills/
 - 自动生成 Feature / SubFeature / Testpoint 层级编码 ID
 - 提供 `nbl-testplan` CLI 工具支持构建、格式化、合并、检查
 - 支持子 Agent 分组并行处理大文档
-
-### nbl-gen-reg
-
-**描述**: NBL IC寄存器生成工具插件。从Excel寄存器手册提取数据，生成reg_slv Verilog、UVM RAL模型、寄存器配置表，支持数据校验和多维度筛选
-
-**分类**: development
-
-**标签**: register, verilog, uvm, ral, chip, verification
-
-**功能**:
-- 从Excel寄存器手册提取结构化JSON数据，支持单文件或目录批量提取
-- 执行常规数据一致性检查和CIF地址范围校验
-- 按BT/register/field级别多维度条件筛选寄存器数据
-- 生成reg_slv Verilog模块（支持APB/AXI-Lite总线接口）
-- 生成UVM RAL模型（支持单Block和系统级两种模式）
-- 生成寄存器配置表（SystemVerilog），支持单BT和多BT合并输出
 
 ## 如何使用
 
