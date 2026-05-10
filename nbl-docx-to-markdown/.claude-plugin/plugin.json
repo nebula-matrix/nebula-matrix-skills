@@ -1,6 +1,6 @@
 {
   "name": "nbl-docx-to-markdown",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "description": "NBL企业定制的 DOCX 转 Markdown 工具，支持复杂 Word 文档转换，包含图片、Visio图表、表格处理及技术文档优化",
   "skills": "./skills"
 }
