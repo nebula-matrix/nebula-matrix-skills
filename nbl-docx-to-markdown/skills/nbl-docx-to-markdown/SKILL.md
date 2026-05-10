@@ -5,162 +5,116 @@ description: NBL企业定制的 DOCX 转 Markdown 技能。将复杂的 Word 文
 
 # NBL DOCX 转 Markdown
 
-## 工作流程
-
-转换流程分为三个主要阶段，每个阶段包含若干自动化步骤：
-
-### 阶段一：LibreOffice 转换与后处理
-1. **LibreOffice 转换为 HTML** - 导出媒体到 `html_source/` 目录
-2. **HTML 后处理** - 修复章节标题格式（`<p>` → `<h1>`），将 `[xxx]` 转换为 `<code>[xxx]</code>`
-
-### 阶段二：Markdown 生成与清理
-3. **Pandoc 转换** - HTML 转 Markdown，复制资源到 `assets/`，修复路径，清理多余 HTML 标签
-
-### 阶段三：验证与修复
-4. **标题结构验证与修复** - 生成 Pandoc 参考文件，语义化对比一级标题，发现差异时必须修复
-
-## 使用方法
+## 快速开始
 
 ```bash
-# 基本用法 - 输出到默认目录
 python3 scripts/convert.py <input.docx>
-
-# 指定输出目录
-python3 scripts/convert.py <input.docx> --output-dir <directory>
-
-# 指定 Markdown 文件名
-python3 scripts/convert.py <input.docx> --output <output.md>
 ```
 
-## 转换流程
+**使用流程**：
+1. 调用 `convert.py` 执行转换
+2. **观察 LOG 输出**，关注标题验证阶段的检测结果
+3. 若检测到章节遗漏或标题不连续，**修复输出的 Markdown**
+4. 确保最终 Markdown 标题结构完整、可消费
 
-### 1. 创建目录结构
+[详细技术原理与实现说明 → 参考文档](references/technical_details.md)
 
-所有文件名中的空格自动转换为下划线 `_`：
+---
 
-```
-<basename>_work/              # 工作目录（空格转下划线）
-├── html_source/              # LibreOffice 原始输出
-│   ├── <basename>_source.html    # 原始 HTML
-│   ├── <basename>_processed.html # 后处理 HTML（修复标题、[xxx]等）
-│   └── *.png                  # 原始图片
-└── markdown_output/           # 最终输出
-    ├── <basename>.md          # Markdown 文件（与输入同名）
-    ├── <basename>_direct_pandoc_markdown_cross_check.md # Pandoc 直接转换（用于验证）
-    └── assets/                # 图片副本
-```
+## 关键步骤
 
-### 2. 后处理细节
-
-HTML 后处理会执行以下操作：
-
-**章节标题修复**
-- 识别 LibreOffice 以 `<p>` 标签输出的章节标题（如 `<p>8<font>初始化</font></p>`）
-- 转换为标准 `<h1>` 标签，确保 Pandoc 正确识别为一级标题
-- 处理多种格式变体（嵌套 `<font>`、`<span>`、数字文本混合等）
-
-**寄存器/表项标记**
-- 将 `[xxx]` 转换为 `<code>[xxx]</code>`，最终呈现为 `` `xxx` `` 代码格式
-- 适用于技术文档中的寄存器域段、表项名称、配置字段等
-
-### 3. Markdown 清理与优化
-
-Pandoc 转换后会自动执行：
-- 复制图片到 `markdown/assets/` 目录
-- 更新图片路径为相对路径 `assets/`
-- 将 `<img>` 标签转换为 Markdown 格式 `![alt](src)`
-- 清理多余 HTML 标签（span、font、b、i 等），保留表格
-
-生成的 Markdown 特点：
-- 使用 CommonMark 格式
-- **表格保留为 HTML 格式**（Markdown 表格能力有限）
-- 图片引用使用相对路径 `assets/`
-- 代码标记使用反引号
-
-### 4. 验证与修复机制
-
-**验证步骤为必选项，发现差异必须修复。**
-
-**自动对比**
-1. 使用 Pandoc 直接转换 DOCX 生成参考文件
-2. 提取两个版本的一级标题进行语义对比（移除章节编号后比较）
-3. 报告差异：
-   - `❌ MISSING`: 参考文件中有但主输出缺少的章节
-   - `⚠️ EXTRA`: 主输出中有但参考文件没有的章节
-
-**强制修复流程**
-当验证发现标题结构不一致时，必须执行以下修复：
-
-1. **分析差异** - 对比主输出和 `_direct_pandoc_markdown_cross_check.md` 中的标题列表
-2. **语义化修复** - 直接使用 Edit 能力修复主输出的 MD 文件：
-   - 参考 `_direct_pandoc_markdown_cross_check.md` 中的一级标题（通常正确）
-   - 在主输出 MD 中添加缺失的一级标题、修正错误标题
-   - 保持原有内容结构，仅修正标题层级
-3. **重新验证** - 确认修复后的一级标题结构与参考文件一致
-
-**注意事项**：
-- Pandoc 直接转换的一级标题通常正确，其他部分（表格、图片路径等）可能不如主输出
-- 仅参考一级标题，不要复制参考文件的其他内容
-- 修复时保持主输出的表格格式和图片路径
-- **序号处理**：`_direct_pandoc_markdown_cross_check.md` 的一级标题会丢失序号，仅参考标题文本确认章节是否遗漏；补充 `#` 符号时，序号保留主输出中的原有格式
-
-修复完成前，转换不视为成功。
-
-## 依赖要求
-
-- **LibreOffice** (`libreoffice` 命令) — DOCX 转 HTML
-- **Pandoc** (`pandoc` 命令) — HTML 转 Markdown
-- **python3-uno** (可选但推荐) — 接受 DOCX 审阅修订，使转换结果更干净
-
-安装依赖：
-```bash
-# Ubuntu/Debian
-sudo apt update
-sudo apt install libreoffice-writer pandoc python3-uno
-
-# 如果不需要头less模式（如有GUI）
-sudo apt install libreoffice-writer pandoc python3-uno
-
-# macOS
-brew install libreoffice pandoc
-# (macOS 上 python3-uno 通常通过 LibreOffice 自带 Python 提供)
-```
-
-**验证安装**：
-```bash
-libreoffice --version   # 应输出版本号
-pandoc --version        # 应输出版本号
-python3 -c "import sys; sys.path.insert(0, '/usr/lib/python3/dist-packages'); import uno; print('uno OK')"
-```
-
-## 输出示例
+### 1. 执行转换
 
 ```bash
-$ python3 scripts/convert.py spec.docx
+# 基本用法（推荐）
+# 脚本自动基于 docx 文件名创建工作目录，空格自动转为下划线
+python3 scripts/convert.py input.docx
 
-📁 Work directory: spec_work/
-📁 HTML source: spec_work/html_source
-📁 Markdown output: spec_work/markdown_output
-
---- Phase 1: LibreOffice Conversion & Post-processing ---
-✅ HTML created: spec_work/html_source/spec_source.html
-✅ Post-processed: 334 bracket patterns converted, 16 headings fixed
-
---- Phase 2: Markdown Generation & Cleanup ---
-✅ Markdown created: spec_work/markdown_output/spec.md
-✅ Copied 23 images to assets/
-✅ Image paths updated
-✅ HTML tags cleaned (tables preserved, img -> markdown)
-
---- Phase 3: Verification & Fix ---
-✅ Heading structure validated (semantics match reference)
-   (If differences found, fix Pattern A0/A0b in convert.py and re-run)
-
-==================================================
-✅ Conversion complete!
-   Markdown:  spec_work/markdown_output/spec.md
-   Check:     spec_work/markdown_output/spec_direct_pandoc_markdown_cross_check.md
-   Assets:    spec_work/markdown_output/assets
-   HTML:      spec_work/html_source
-==================================================
+# 指定工作目录（可选）
+python3 scripts/convert.py input.docx --output-dir <doc_name>_convert/
 ```
+
+> **参数说明**：
+> - `--output-dir`: 显式指定工作目录路径。注意：不指定此参数时，脚本会自动基于 docx 文件名创建目录，空格自动转为下划线；若显式指定路径，路径中的空格不会自动处理，建议手动替换为 `_`。
+
+输出目录结构（按处理顺序）：
+
+```
+<doc_name>_convert/
+├── 1. docx_preprocessed/           # 接受修订后的 docx
+├── 2. html_source_by_LibreOffice/  # LibreOffice HTML 输出
+├── 3. crosscheck_by_Pandoc/        # Pandoc 交叉参考文件
+└── 4. markdown_output/             # 最终 Markdown 输出
+    ├── *.md                        # 主输出文件
+    └── assets/                     # 图片资源
+```
+
+### 2. 检查 LOG 输出（重要）
+
+转换脚本会打印详细的标题验证信息，**必须关注**以下内容：
+
+**标题结构列表**：
+```
+[主输出 - Main Output] 标题结构:
+   H1 headings (10):
+      1. 2 模块特性
+      2. 3 参考文档
+      ...
+   H2 headings (14):
+      ...
+
+[参考文档 - Pandoc Reference] 标题结构:
+   H1 headings (0):
+      (无H1标题)
+```
+
+**章节遗漏检测**：
+```
+⚠️  [章节遗漏检测] H1章节号不连续，以下章节可能缺失: 1
+   当前章节序列: [2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
+   预期章节序列: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
+```
+
+**说明**：
+- Pandoc 参考仅用于交叉比对，不一定完全正确（Word 非标准样式时 Pandoc 也会丢失标题）
+- 最终目标是**主输出的 Markdown 标题结构完整、可消费**
+
+### 3. 修复 Markdown 标题（按需）
+
+**何时需要修复**：
+- LOG 中显示章节号不连续（如从 `2` 开始，缺少 `1`）
+- H1 标题数量明显少于文档实际章节数
+- 某些章节内容在 Markdown 中以普通文本存在，而非 `# ` 标题
+
+**修复方法**：
+1. 读取主输出 Markdown 文件（`4. markdown_output/*.md`）
+2. 找到被遗漏的章节内容（通常是 `1**功能概述**` 或普通文本）
+3. 修正为标准 Markdown 标题格式：
+   ```markdown
+   # 1 功能概述
+   
+   # 2 模块特性
+   ```
+4. 确保章节编号连续，层级正确
+
+**不要**：
+- 不要修改原始 Word 文档（无法消费）
+- 不要复制 Pandoc 参考文件的其他内容（表格、图片路径等可能不如主输出）
+- 不要完全信任 Pandoc 参考（其自身也可能遗漏标题）
+
+### 4. 确认输出
+
+修复后确认：
+- 所有章节都有对应的 `# ` H1 标题
+- 子章节有对应的 `## ` H2 标题
+- 图片路径正确（`assets/` 目录下）
+- 表格保留为 HTML 格式（正常）
+
+---
+
+## 注意事项
+
+1. **标题检测是必选项** — 必须观察 LOG 中的标题验证结果
+2. **Pandoc 参考不一定正确** — Word 非标准样式时 Pandoc 也会丢失标题
+3. **最终目标是 Markdown 结构合理** — 确保后续 `nbl-testplan` 等工具能正确解析
+4. **仅修复标题层级** — 保持主输出的表格格式、图片路径等内容不变

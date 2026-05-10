@@ -136,7 +136,7 @@ def libreoffice_to_html(docx_path: Path, work_dir: Path) -> tuple[Path, str]:
     Returns:
         (html_output_path, base_name) where base_name is sanitized filename stem
     """
-    html_dir = work_dir / "html_source"
+    html_dir = work_dir / "2. html_source_by_LibreOffice"
     html_dir.mkdir(exist_ok=True)
 
     # Get sanitized base name for file naming
@@ -176,7 +176,7 @@ def libreoffice_to_html(docx_path: Path, work_dir: Path) -> tuple[Path, str]:
     print(f"✅ HTML created: {html_output}")
 
     items = list(html_dir.iterdir())
-    print(f"   Generated {len(items)} items in html_source/ directory")
+    print(f"   Generated {len(items)} items in 2. html_source_by_LibreOffice/ directory")
 
     return html_output, base_name
 
@@ -294,9 +294,11 @@ def pandoc_to_markdown(processed_html: Path, html_dir: Path, md_dir: Path, base_
     return output_md
 
 
-def generate_pandoc_reference(docx_path: Path, md_dir: Path, base_name: str) -> Path:
+def generate_pandoc_reference(docx_path: Path, work_dir: Path, base_name: str) -> Path:
     """Generate Pandoc direct conversion as reference for heading validation."""
-    ref_md = md_dir / f"{base_name}_direct_pandoc_markdown_cross_check.md"
+    crosscheck_dir = work_dir / "3. crosscheck_by_Pandoc"
+    crosscheck_dir.mkdir(parents=True, exist_ok=True)
+    ref_md = crosscheck_dir / f"{base_name}_direct_pandoc_markdown_cross_check.md"
 
     print(f"🔄 Generating Pandoc reference (for heading validation)...")
 
@@ -361,10 +363,69 @@ def validate_headings(main_md: Path, ref_md: Path) -> bool:
         print("   ⚠️ Reference file not available, skipping heading validation")
         return True
 
-    print(f"\n--- Step 3.5: Heading Validation ---")
+    print(f"\n--- Step 8: Heading Validation ---")
 
-    main_h1 = [h[1] for h in extract_headings(main_md) if h[0] == 'h1']
-    ref_h1 = [h[1] for h in extract_headings(ref_md) if h[0] == 'h1']
+    # Extract all headings (h1, h2, h3) from both files
+    main_headings = extract_headings(main_md)
+    ref_headings = extract_headings(ref_md)
+
+    main_h1 = [h[1] for h in main_headings if h[0] == 'h1']
+    main_h2 = [h[1] for h in main_headings if h[0] == 'h2']
+    main_h3 = [h[1] for h in main_headings if h[0] == 'h3']
+    ref_h1 = [h[1] for h in ref_headings if h[0] == 'h1']
+    ref_h2 = [h[1] for h in ref_headings if h[0] == 'h2']
+    ref_h3 = [h[1] for h in ref_headings if h[0] == 'h3']
+
+    # Print detailed heading lists for debugging
+    print(f"\n   [主输出 - Main Output] 标题结构:")
+    print(f"   H1 headings ({len(main_h1)}):")
+    if main_h1:
+        for i, h in enumerate(main_h1, 1):
+            print(f"      {i}. {h}")
+    else:
+        print(f"      (无H1标题)")
+    print(f"   H2 headings ({len(main_h2)}):")
+    if main_h2:
+        for i, h in enumerate(main_h2, 1):
+            print(f"      {i}. {h}")
+    else:
+        print(f"      (无H2标题)")
+
+    print(f"\n   [参考文档 - Pandoc Reference] 标题结构:")
+    print(f"   H1 headings ({len(ref_h1)}):")
+    if ref_h1:
+        for i, h in enumerate(ref_h1, 1):
+            print(f"      {i}. {h}")
+    else:
+        print(f"      (无H1标题 - Word文档章节标题未使用标准Heading 1样式)")
+    print(f"   H2 headings ({len(ref_h2)}):")
+    if ref_h2:
+        for i, h in enumerate(ref_h2, 1):
+            print(f"      {i}. {h}")
+    else:
+        print(f"      (无H2标题)")
+
+    # Detect missing chapters by checking chapter number continuity
+    missing_chapters = []
+    if main_h1:
+        # Extract leading chapter numbers from H1 titles
+        chapter_nums = []
+        for h in main_h1:
+            match = re.match(r'^(\d+)', h)
+            if match:
+                chapter_nums.append(int(match.group(1)))
+
+        if chapter_nums:
+            # Check continuity: expect 1, 2, 3, ... up to max chapter
+            expected = list(range(1, max(chapter_nums) + 1))
+            missing = [n for n in expected if n not in chapter_nums]
+            if missing:
+                missing_chapters = missing
+                missing_str = ', '.join(str(n) for n in missing)
+                print(f"\n   ⚠️  [章节遗漏检测] H1章节号不连续，以下章节可能缺失: {missing_str}")
+                print(f"      当前章节序列: {chapter_nums}")
+                print(f"      预期章节序列: {list(range(1, max(chapter_nums) + 1))}")
+                print(f"      建议: 检查原始Word文档中缺失章节是否使用了标准Heading样式")
 
     # Normalize for semantic comparison
     main_normalized = [normalize_heading(h) for h in main_h1]
@@ -382,22 +443,73 @@ def validate_headings(main_md: Path, ref_md: Path) -> bool:
         if main_norm not in ref_normalized:
             issues.append(f"   ⚠️  EXTRA: '{main_h1[i]}' (not in Pandoc reference)")
 
-    # Check order consistency
+    # Check order consistency (only if both have same count)
     if len(main_normalized) == len(ref_normalized) and main_normalized != ref_normalized:
         issues.append("   ⚠️  ORDER MISMATCH: Headings order differs from reference")
 
-    # Print results
-    print(f"   Main output: {len(main_h1)} H1 headings")
-    print(f"   Reference:   {len(ref_h1)} H1 headings")
+    # Print summary and analysis
+    print(f"\n   [验证结果 - Validation Summary]")
+    print(f"   Main output: {len(main_h1)} H1 / {len(main_h2)} H2 / {len(main_h3)} H3")
+    print(f"   Reference:   {len(ref_h1)} H1 / {len(ref_h2)} H2 / {len(ref_h3)} H3")
 
-    if issues:
-        print("\n   Issues found:")
-        for issue in issues:
-            print(issue)
-        print("\n   💡 Suggest: Review the conversion output above")
-        return False
+    if ref_h1:
+        # Normal comparison when reference has H1
+        if issues:
+            print(f"\n   [主动比对分析]")
+            print(f"   标题语义对照表:")
+            max_len = max(len(main_h1), len(ref_h1))
+            for i in range(max_len):
+                main_title = main_h1[i] if i < len(main_h1) else "(无)"
+                ref_title = ref_h1[i] if i < len(ref_h1) else "(无)"
+                main_norm = normalize_heading(main_title) if main_title != "(无)" else ""
+                ref_norm = normalize_heading(ref_title) if ref_title != "(无)" else ""
+                match = "✅" if main_norm == ref_norm else "❌"
+                print(f"      {match} [{i+1}] 主: {main_title:30s} | 参: {ref_title}")
+
+            print(f"\n   Issues found:")
+            for issue in issues:
+                print(issue)
+            print(f"\n   [说明]")
+            print(f"      • 主输出与Pandoc参考存在差异，请对照上表检查标题结构")
+            print(f"      • Pandoc参考仅作为交叉验证，不一定完全正确")
+            print(f"      • 最终目标是确保主输出Markdown的标题结构完整、编号连续")
+            print(f"      • 若主输出缺少标题，可检查Markdown中对应内容是否以普通文本存在，手动修正为#标题格式")
+            return False
+        else:
+            print("   ✅ Heading structure validated (semantics match reference)")
+            return True
     else:
-        print("   ✅ Heading structure validated (semantics match reference)")
+        # Reference has 0 H1 - Word doc likely uses custom styles
+        print(f"\n   [主动比对分析]")
+        print(f"   ⚠️  Pandoc参考文档未识别到任何H1标题")
+        print(f"   原因: Word文档中章节标题未使用标准Heading 1样式，可能使用了自定义样式")
+        print(f"   影响: Pandoc直接转换无法提供有效的H1对比基准，验证仅能以H2为参照")
+
+        if main_h1:
+            print(f"\n   主输出H2与参考H2对照:")
+            for i, main_title in enumerate(main_h2):
+                # Find matching ref h2 by normalized name
+                main_norm = normalize_heading(main_title)
+                matched = False
+                for j, ref_title in enumerate(ref_h2):
+                    if normalize_heading(ref_title) == main_norm:
+                        print(f"      ✅ [{i+1}] {main_title}  <=>  参: {ref_title}")
+                        matched = True
+                        break
+                if not matched:
+                    print(f"      ⚠️  [{i+1}] {main_title}  <=>  (参考文档中无对应)")
+
+        print(f"\n   [说明]")
+        print(f"      • Pandoc参考文档仅用于交叉比对，不一定完全正确（Word非标准样式时Pandoc也会丢失标题）")
+        print(f"      • 上述标题结构列表供参考对比，最终目标是确保主输出的Markdown结构合理、可消费")
+        print(f"      • 若检测到章节遗漏，请检查主输出Markdown中对应内容是否以普通文本存在，可手动修正为#标题格式")
+
+        if missing_chapters:
+            missing_str = ', '.join(str(n) for n in missing_chapters)
+            print(f"      • ⚠️  当前检测到章节号不连续，缺失: {missing_str}")
+            print(f"        请在主输出Markdown中定位并补充对应标题，确保后续nbl-testplan等工具能正确解析章节结构")
+
+        # Treat as warning, not error
         return True
 
 
@@ -568,8 +680,8 @@ def main():
     # Get sanitized base name for naming files
     base_name = sanitize_filename(docx_path.stem)
 
-    html_dir = work_dir / "html_source"
-    md_dir = work_dir / "markdown_output"
+    html_dir = work_dir / "2. html_source_by_LibreOffice"
+    md_dir = work_dir / "4. markdown_output"
     md_dir.mkdir(parents=True, exist_ok=True)
 
     # Determine output path
@@ -587,7 +699,9 @@ def main():
     if not ACCEPT_REVISIONS_AVAILABLE:
         print("   ℹ️  accept_revisions module not available, skipping")
     elif docx_has_revisions(docx_path):
-        accepted_docx = work_dir / f"{base_name}_accepted.docx"
+        docx_preprocessed_dir = work_dir / "1. docx_preprocessed"
+        docx_preprocessed_dir.mkdir(parents=True, exist_ok=True)
+        accepted_docx = docx_preprocessed_dir / f"{base_name}_accepted.docx"
         try:
             new_path = accept_revisions.accept_all_revisions(
                 str(docx_path), str(accepted_docx)
@@ -607,27 +721,32 @@ def main():
     print("\n--- Step 2: Post-processing HTML ---")
     processed_html = post_process_html(html_path, html_dir, base_name)
 
-    print("\n--- Step 3: Pandoc HTML -> Markdown ---")
+    # Step 3: Generate Pandoc crosscheck reference (early, can run in parallel with main path)
+    ref_md = None
+    if not args.skip_validation:
+        print("\n--- Step 3: Generate Pandoc crosscheck reference ---")
+        ref_md = generate_pandoc_reference(docx_path, work_dir, base_name)
+
+    print("\n--- Step 4: Pandoc HTML -> Markdown ---")
     final_md = pandoc_to_markdown(processed_html, html_dir, md_dir, base_name)
 
-    print("\n--- Step 4: Copy assets ---")
+    print("\n--- Step 5: Copy assets ---")
     copy_assets(html_dir, md_dir)
 
-    print("\n--- Step 5: Fix markdown paths ---")
+    print("\n--- Step 6: Fix markdown paths ---")
     fix_markdown_paths(final_md)
 
-    print("\n--- Step 6: Clean HTML tags ---")
+    print("\n--- Step 7: Clean HTML tags ---")
     clean_html_tags(final_md)
 
-    if not args.skip_validation:
-        print("\n--- Step 7: Generate Pandoc Reference & Validate ---")
-        ref_md = generate_pandoc_reference(docx_path, md_dir, base_name)
+    if not args.skip_validation and ref_md:
+        print("\n--- Step 8: Validate headings ---")
         validate_headings(final_md, ref_md)
 
     print("\n" + "="*50)
     print("✅ Conversion complete!")
     print(f"   Markdown:  {final_md}")
-    print(f"   Check:     {md_dir / f'{base_name}_direct_pandoc_markdown_cross_check.md'}")
+    print(f"   Check:     {work_dir / '3. crosscheck_by_Pandoc' / f'{base_name}_direct_pandoc_markdown_cross_check.md'}")
     print(f"   Assets:    {md_dir / 'assets'}")
     print(f"   HTML:      {html_dir}")
     print("="*50)
