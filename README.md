@@ -45,14 +45,6 @@ nebula-matrix-skills/
 │   │       └── scripts/         # Python 代码与 CLI
 │   ├── README.md                # 插件文档
 │   └── pyproject.toml           # 项目配置
-├── nbl-testplan-creator/         # NBL IC 验证测试计划生成器插件（Markdown-first）
-│   ├── .claude-plugin/
-│   │   └── plugin.json          # 插件配置
-│   └── skills/
-│       └── nbl-testplan-creator/
-│           ├── SKILL.md         # 技能主文件
-│           ├── references/      # 参考文档
-│           └── scripts/         # 执行脚本
 └── README.md                     # 本文件
 ```
 
@@ -120,21 +112,6 @@ nebula-matrix-skills/
 - 生成 reg_slv Verilog 模块（支持 APB/AXI-Lite 总线接口）
 - 生成 UVM RAL 模型（支持单 Block 和系统级两种模式）
 - 生成寄存器配置表（SystemVerilog），支持单 BT 和多 BT 合并输出
-
-### nbl-testplan-creator
-
-**描述**: NBL 企业 IC 验证测试计划生成器，采用 Markdown-first 工作流从规格文档逐章节生成结构化测试点
-
-**分类**: development
-
-**标签**: testplan, verification, chip, testpoint
-
-**功能**:
-- 采用 Markdown-first 工作流，全程以 Markdown 为唯一工作文件
-- 逐章节串行分析测试点，失败不污染已有数据
-- 自动生成 Feature / SubFeature / Testpoint 层级编码 ID
-- 提供 `nbl-testplan` CLI 工具支持构建、格式化、合并、检查
-- 支持子 Agent 分组并行处理大文档
 
 ## 如何使用
 
