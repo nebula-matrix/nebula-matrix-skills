@@ -159,8 +159,9 @@ claude plugins add https://github.com/your-username/nebula-matrix-skills.git
 
 ## 版本信息
 
-- **Marketplace 版本**: 1.0.0
+- **Marketplace 版本**: 1.5.10
 - **创建日期**: 2026-04-13
+- **最后更新**: 2026-05-14
 - **维护团队**: Nebula Matrix Team
 
 ## 许可证
