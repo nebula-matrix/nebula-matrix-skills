@@ -35,10 +35,6 @@ nebula-matrix-skills/
 │   │   │   ├── assets/          # 资源文件
 │   │   │   ├── references/      # 参考文档
 │   │   │   └── scripts/         # 执行脚本
-│   │   ├── nbl-testplan-generator/ # 测试计划生成技能
-│   │   │   ├── SKILL.md         # 技能主文件
-│   │   │   ├── references/      # 参考文档
-│   │   │   └── scripts/         # 执行脚本
 │   │   ├── nbl-gen-reg/          # 寄存器生成技能
 │   │   │   ├── SKILL.md         # 技能主文件
 │   │   │   ├── references/      # 参考文档
@@ -101,15 +97,7 @@ nebula-matrix-skills/
 - 验证转换结果，发现结构差异时强制修复
 - 特别适用于包含寄存器描述、表项定义等技术文档
 
-**2. nbl-testplan-generator** — 测试计划生成器
-- 调用 `nbl-docx-to-markdown` skill 将 Word 功能规格书转换为 Markdown
-- 将 Markdown 解析为 `spec_tree.json`，提取模块特性和交叉引用索引
-- 将寄存器手册 xlsx 解析为 `reg_info.json`
-- Claude 按 Feature 分块交叉引用分析，自动生成 D→E→F→G 层级分解
-- 自动生成基于英文缩写 `_eng_id` 的 SystemVerilog 覆盖率路径（W 列）
-- 生成 `fs_reg_slv_review.md` 记录不确定内容，支持二次刷新
-
-**3. nbl-gen-reg** — 寄存器生成工具
+**2. nbl-gen-reg** — 寄存器生成工具
 - 从 Excel 寄存器手册提取结构化 JSON 数据，支持单文件或目录批量提取
 - 执行常规数据一致性检查和 CIF 地址范围校验
 - 按 BT/register/field 级别多维度条件筛选寄存器数据
@@ -117,7 +105,7 @@ nebula-matrix-skills/
 - 生成 UVM RAL 模型（支持单 Block 和系统级两种模式）
 - 生成寄存器配置表（SystemVerilog），支持单 BT 和多 BT 合并输出
 
-**4. nbl-testplan-creator** — Markdown-first 测试计划生成器
+**3. nbl-testplan-creator** — Markdown-first 测试计划生成器
 - 采用 Markdown-first 工作流，全程以 Markdown 为唯一工作文件
 - 逐章节串行分析测试点，失败不污染已有数据
 - 自动生成 Feature / SubFeature / Testpoint 层级编码 ID
